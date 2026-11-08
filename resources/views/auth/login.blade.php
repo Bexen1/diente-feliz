@@ -20,7 +20,7 @@
             <div class="beneficio"><i class="bi bi-shield-lock"></i> Datos de salud cifrados y auditados</div>
         </div>
 
-        <small class="text-white-50">Proyecto Integrado · INACAP</small>
+        <small class="text-white-50"></small>
         @include('partials.logo', ['tamano' => 320, 'clase' => 'diente-fondo'])
     </section>
 

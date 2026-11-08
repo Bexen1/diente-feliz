@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Cita;
+use App\Models\Presupuesto;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -59,6 +60,8 @@ class PantallasTest extends TestCase
             'paciente_id' => 2, 'doctor_id' => 1, 'cantidades' => [1 => 1],
         ]);
 
-        $this->actingAs($recepcionista)->get('/presupuestos/2/edit')->assertOk()->assertSee('Editar presupuesto');
+        $nuevo = Presupuesto::where('estado', 'borrador')->latest('id')->first();
+
+        $this->actingAs($recepcionista)->get("/presupuestos/{$nuevo->id}/edit")->assertOk()->assertSee('Editar presupuesto');
     }
 }

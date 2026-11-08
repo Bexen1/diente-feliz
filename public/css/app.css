@@ -302,6 +302,13 @@ a { text-underline-offset: 2px; }
 }
 
 .barra { background: #edf2f1; border-radius: 999px; height: 10px; overflow: hidden; }
+.grafico { width: 100%; height: auto; display: block; }
+.grafico-valor { font-size: 13px; font-weight: 700; fill: var(--texto); font-family: inherit; }
+.grafico-etiqueta { font-size: 13px; fill: var(--texto-suave); font-family: inherit; }
+.mapa-calor { border-collapse: separate; border-spacing: 3px; width: 100%; min-width: 520px; font-size: .78rem; }
+.mapa-calor th { font-weight: 700; color: var(--texto-suave); text-align: center; padding: .1rem .2rem; }
+.mapa-calor tbody th { text-align: left; padding-right: .5rem; }
+.mapa-calor td { text-align: center; border-radius: 5px; height: 28px; min-width: 28px; border: 1px solid #edf2f1; font-weight: 700; }
 .barra > div { background: linear-gradient(90deg, var(--acento-claro), var(--acento)); height: 100%; border-radius: 999px; }
 
 @media print {

@@ -14,5 +14,9 @@ class DatabaseSeeder extends Seeder
             UsuarioSeeder::class,
             PacienteSeeder::class,
         ]);
+
+        if (! app()->environment('testing')) {
+            $this->call(DemoSeeder::class);
+        }
     }
 }
