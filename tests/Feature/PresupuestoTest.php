@@ -67,7 +67,7 @@ class PresupuestoTest extends TestCase
     public function test_pago_mayor_que_el_saldo_se_rechaza(): void
     {
         $this->actingAs($this->usuario('valentina'))
-            ->post('/presupuestos/1/pagos', ['monto' => 50000, 'fecha' => now()->toDateString()])
+            ->post('/presupuestos/1/pagos', ['monto' => 50000, 'fecha' => now()->toDateString(), 'metodo' => 'efectivo'])
             ->assertSessionHasErrors(['monto' => 'El monto supera el saldo pendiente de $42.000.']);
 
         $this->assertSame(2, Pago::count());
@@ -76,7 +76,7 @@ class PresupuestoTest extends TestCase
     public function test_pago_del_saldo_completo_marca_pagado(): void
     {
         $this->actingAs($this->usuario('valentina'))
-            ->post('/presupuestos/1/pagos', ['monto' => 42000, 'fecha' => now()->toDateString()])
+            ->post('/presupuestos/1/pagos', ['monto' => 42000, 'fecha' => now()->toDateString(), 'metodo' => 'debito'])
             ->assertSessionHasNoErrors();
 
         $presupuesto = Presupuesto::find(1);
@@ -127,7 +127,7 @@ class PresupuestoTest extends TestCase
         $dentista = $this->usuario('camila');
 
         $this->actingAs($dentista)->get('/presupuestos/1')->assertOk()->assertDontSee('Registrar pago');
-        $this->actingAs($dentista)->post('/presupuestos/1/pagos', ['monto' => 1000, 'fecha' => now()->toDateString()])->assertForbidden();
+        $this->actingAs($dentista)->post('/presupuestos/1/pagos', ['monto' => 1000, 'fecha' => now()->toDateString(), 'metodo' => 'efectivo'])->assertForbidden();
         $this->actingAs($dentista)->get('/presupuestos/create')->assertForbidden();
     }
 

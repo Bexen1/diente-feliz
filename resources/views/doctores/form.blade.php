@@ -64,30 +64,32 @@
 
                     <form method="POST" action="{{ route('doctores.horarios.store', $doctor) }}" class="row g-2 align-items-end">
                         @csrf
-                        <div class="col-sm-4">
-                            <label for="dia_semana" class="form-label">Día</label>
-                            <select id="dia_semana" name="dia_semana" class="form-select">
-                                @foreach ($dias as $numero => $dia)
-                                    <option value="{{ $numero }}" @selected(old('dia_semana') == $numero)>{{ $dia }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-sm-3">
+                        <fieldset class="col-12 mb-1">
+                            <legend class="form-label fs-6">Días</legend>
+                            @foreach ($dias as $numero => $dia)
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="dias[]" value="{{ $numero }}" id="dia-{{ $numero }}"
+                                           @checked(in_array($numero, old('dias', [1, 2, 3, 4, 5])))>
+                                    <label class="form-check-label" for="dia-{{ $numero }}">{{ $dia }}</label>
+                                </div>
+                            @endforeach
+                        </fieldset>
+                        <div class="col-sm-5">
                             <label for="hora_inicio" class="form-label">Desde</label>
                             <input type="time" id="hora_inicio" name="hora_inicio" value="{{ old('hora_inicio', '09:00') }}"
                                    @class(['form-control', 'is-invalid' => $errors->has('hora_inicio')])>
                         </div>
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <label for="hora_fin" class="form-label">Hasta</label>
                             <input type="time" id="hora_fin" name="hora_fin" value="{{ old('hora_fin', '18:00') }}"
                                    @class(['form-control', 'is-invalid' => $errors->has('hora_fin')])>
                         </div>
-                        <div class="col-sm-2">
+                        <div class="col-sm-3">
                             <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-plus-lg"></i> Agregar</button>
                         </div>
-                        @if ($errors->hasAny(['hora_inicio', 'hora_fin', 'dia_semana']))
+                        @if ($errors->hasAny(['hora_inicio', 'hora_fin', 'dias', 'dias.*']))
                             <div class="col-12 text-danger small">
-                                {{ $errors->first('hora_inicio') ?: ($errors->first('hora_fin') ?: $errors->first('dia_semana')) }}
+                                {{ $errors->first('hora_inicio') ?: ($errors->first('hora_fin') ?: ($errors->first('dias') ?: $errors->first('dias.*'))) }}
                             </div>
                         @endif
                     </form>

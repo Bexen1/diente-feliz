@@ -4,17 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\EvolucionRequest;
 use App\Http\Requests\FichaRequest;
+use App\Http\Requests\FichaVerRequest;
 use App\Http\Requests\HallazgoRequest;
 use App\Models\Doctor;
 use App\Models\Evolucion;
 use App\Models\Paciente;
 use App\Services\AuditoriaService;
 use App\Services\OdontogramaService;
+use App\Services\PlanTratamientoService;
 
 class FichaController extends Controller
 {
-    public function show(Paciente $paciente)
+    public function show(FichaVerRequest $request, Paciente $paciente, PlanTratamientoService $plan, OdontogramaService $odontograma)
     {
+        $piezaFiltro = $request->validated('pieza') ? (int) $request->validated('pieza') : null;
+
         $ficha = $paciente->ficha()->with([
             'evoluciones' => fn ($q) => $q->with('doctor.usuario')->orderByDesc('fecha')->orderByDesc('id'),
             'radiografias' => fn ($q) => $q->orderByDesc('fecha'),
@@ -27,6 +31,9 @@ class FichaController extends Controller
             'ficha' => $ficha,
             'odontograma' => $ficha->estado_odontograma_json ?? [],
             'doctores' => auth()->user()->doctor ? collect() : Doctor::with('usuario')->where('activo', true)->get(),
+            'plan' => $plan->planDelPaciente($paciente),
+            'historial' => $odontograma->historial($ficha, $piezaFiltro),
+            'piezaFiltro' => $piezaFiltro,
         ]);
     }
 

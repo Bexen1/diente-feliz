@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Bloqueo;
 use App\Models\Box;
 use App\Models\Cita;
 use App\Models\Convenio;
@@ -46,6 +47,31 @@ class DemoSeeder extends Seeder
 
         $this->crearCitas($hoy, $boxes, $pacientes);
         $this->crearPresupuestos($presupuestos, $hoy);
+        $this->crearBloqueos($hoy);
+    }
+
+    private function crearBloqueos(Carbon $hoy): void
+    {
+        $doctor = Doctor::orderBy('id')->skip(1)->first();
+        if ($doctor) {
+            $inicio = $hoy->copy()->addDays(21)->startOfWeek(Carbon::MONDAY);
+            Bloqueo::firstOrCreate(
+                ['doctor_id' => $doctor->id, 'fecha_inicio' => $inicio->toDateString()],
+                ['fecha_fin' => $inicio->copy()->addDays(4)->toDateString(), 'motivo' => 'Vacaciones']
+            );
+        }
+
+        $box = Box::where('nombre', 'Box 3')->first();
+        if ($box) {
+            $dia = $hoy->copy()->addDays(30);
+            while ($dia->isWeekend()) {
+                $dia->addDay();
+            }
+            Bloqueo::firstOrCreate(
+                ['box_id' => $box->id, 'fecha_inicio' => $dia->toDateString()],
+                ['fecha_fin' => $dia->toDateString(), 'motivo' => 'Mantención del sillón']
+            );
+        }
     }
 
     private function crearCatalogo(): void
@@ -174,7 +200,11 @@ class DemoSeeder extends Seeder
         $sorteo = mt_rand(1, 100);
 
         if ($termino->lte($ahora)) {
-            return $sorteo <= 88 ? 'atendida' : 'cancelada';
+            return match (true) {
+                $sorteo <= 84 => 'atendida',
+                $sorteo <= 94 => 'cancelada',
+                default => 'no_asistio',
+            };
         }
 
         if ($sorteo <= 8) {
@@ -214,7 +244,16 @@ class DemoSeeder extends Seeder
             $presupuesto->created_at = $creado;
             $presupuesto->updated_at = $creado;
             $presupuesto->save();
-            $presupuesto->detalles()->createMany($calculo['lineas']);
+            $lineas = array_map(function ($linea) use ($estado) {
+                $linea['cantidad_realizada'] = match ($estado) {
+                    'pagado' => mt_rand(1, 100) <= 85 ? $linea['cantidad'] : 0,
+                    'aceptado' => mt_rand(0, $linea['cantidad']),
+                    default => 0,
+                };
+
+                return $linea;
+            }, $calculo['lineas']);
+            $presupuesto->detalles()->createMany($lineas);
 
             $this->crearPagos($presupuesto, $estado, (float) $calculo['total'], $creado, $hoy);
         }
@@ -277,6 +316,7 @@ class DemoSeeder extends Seeder
                 'monto' => $monto,
                 'fecha' => $fecha->toDateString(),
                 'estado' => 'vigente',
+                'metodo' => ['efectivo', 'debito', 'debito', 'credito', 'transferencia', 'transferencia'][mt_rand(0, 5)],
                 'created_at' => $fecha,
                 'updated_at' => $fecha,
             ];

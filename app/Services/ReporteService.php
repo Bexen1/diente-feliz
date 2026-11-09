@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Cita;
+use App\Models\Pago;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -41,12 +43,13 @@ class ReporteService
             ->orderBy('usuarios.nombre')
             ->selectRaw("usuarios.nombre, doctores.especialidad, COUNT(citas.id) AS total,
                 SUM(CASE WHEN citas.estado = 'atendida' THEN 1 ELSE 0 END) AS atendidas,
-                SUM(CASE WHEN citas.estado = 'cancelada' THEN 1 ELSE 0 END) AS canceladas")
+                SUM(CASE WHEN citas.estado = 'cancelada' THEN 1 ELSE 0 END) AS canceladas,
+                SUM(CASE WHEN citas.estado = 'no_asistio' THEN 1 ELSE 0 END) AS inasistencias")
             ->get()
-            ->map(fn ($f) => [$f->nombre, $f->especialidad, (int) $f->total, (int) $f->atendidas, (int) $f->canceladas])
+            ->map(fn ($f) => [$f->nombre, $f->especialidad, (int) $f->total, (int) $f->atendidas, (int) $f->canceladas, (int) $f->inasistencias])
             ->all();
 
-        return [['Doctor', 'Especialidad', 'Citas', 'Atendidas', 'Canceladas'], $filas];
+        return [['Doctor', 'Especialidad', 'Citas', 'Atendidas', 'Canceladas', 'Inasistencias'], $filas];
     }
 
     private function porBox(Carbon $desde, Carbon $hasta): array
@@ -55,7 +58,7 @@ class ReporteService
             ->join('sucursales', 'sucursales.id', '=', 'box.sucursal_id')
             ->leftJoin('citas', function ($join) use ($desde, $hasta) {
                 $join->on('citas.box_id', '=', 'box.id')
-                    ->where('citas.estado', '<>', 'cancelada')
+                    ->whereNotIn('citas.estado', Cita::ESTADOS_LIBERAN_HORARIO)
                     ->whereBetween('citas.hora_inicio', [$desde, $hasta]);
             })
             ->groupBy('sucursales.nombre', 'box.nombre')
@@ -73,7 +76,7 @@ class ReporteService
     {
         $citas = DB::table('citas')
             ->join('box', 'box.id', '=', 'citas.box_id')
-            ->where('citas.estado', '<>', 'cancelada')
+            ->whereNotIn('citas.estado', Cita::ESTADOS_LIBERAN_HORARIO)
             ->whereBetween('citas.hora_inicio', [$desde, $hasta])
             ->groupBy('box.sucursal_id')
             ->selectRaw('box.sucursal_id, COUNT(*) AS citas, COUNT(DISTINCT citas.paciente_id) AS pacientes')
@@ -125,12 +128,12 @@ class ReporteService
             ->whereBetween('pagos.fecha', [$desde->toDateString(), $hasta->toDateString()])
             ->orderBy('pagos.fecha')->orderBy('pagos.id')
             ->get(['pagos.fecha', 'presupuestos.id AS presupuesto', 'pacientes.rut', 'pacientes.nombre AS paciente',
-                'usuarios.nombre AS doctor', 'pagos.monto', 'pagos.estado'])
+                'usuarios.nombre AS doctor', 'pagos.monto', 'pagos.metodo', 'pagos.estado'])
             ->map(fn ($v) => [
                 Carbon::parse($v->fecha)->format('d/m/Y'), $v->presupuesto, $v->rut, $v->paciente,
-                $v->doctor, (float) $v->monto, ucfirst($v->estado),
+                $v->doctor, (float) $v->monto, Pago::METODOS[$v->metodo] ?? $v->metodo, ucfirst($v->estado),
             ])->all();
 
-        return [['Fecha', 'Presupuesto N.°', 'RUT', 'Paciente', 'Doctor', 'Monto', 'Estado'], $filas];
+        return [['Fecha', 'Presupuesto N.°', 'RUT', 'Paciente', 'Doctor', 'Monto', 'Método', 'Estado'], $filas];
     }
 }

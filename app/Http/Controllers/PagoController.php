@@ -15,10 +15,21 @@ class PagoController extends Controller
     public function store(PagoRequest $request, Presupuesto $presupuesto)
     {
         $monto = (float) $request->validated('monto');
-        $this->servicio->registrarPago($presupuesto, $monto, $request->validated('fecha'));
+        $pago = $this->servicio->registrarPago($presupuesto, $monto, $request->validated('fecha'), $request->validated('metodo'));
 
         return redirect()->route('presupuestos.show', $presupuesto)
-            ->with('exito', 'Pago de $'.number_format($monto, 0, ',', '.').' registrado.');
+            ->with('exito', 'Pago de $'.number_format($monto, 0, ',', '.').' registrado.')
+            ->with('comprobante', $pago->id);
+    }
+
+    public function comprobante(Pago $pago)
+    {
+        $pago->load(['presupuesto.paciente.convenio', 'presupuesto.doctor.usuario']);
+
+        return view('pagos.comprobante', [
+            'pago' => $pago,
+            'saldo' => $pago->presupuesto->saldoPendiente(),
+        ]);
     }
 
     public function confirmarAnulacion(Pago $pago)

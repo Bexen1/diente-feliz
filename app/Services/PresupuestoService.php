@@ -102,9 +102,9 @@ class PresupuestoService
         AuditoriaService::registrar('anular', 'presupuestos', $presupuesto->id, $antes, ['estado' => 'anulado', 'motivo' => $motivo]);
     }
 
-    public function registrarPago(Presupuesto $presupuesto, float $monto, string $fecha): Pago
+    public function registrarPago(Presupuesto $presupuesto, float $monto, string $fecha, string $metodo = 'efectivo'): Pago
     {
-        return DB::transaction(function () use ($presupuesto, $monto, $fecha) {
+        return DB::transaction(function () use ($presupuesto, $monto, $fecha, $metodo) {
             $presupuesto = Presupuesto::lockForUpdate()->findOrFail($presupuesto->id);
 
             if ($presupuesto->estado !== 'aceptado') {
@@ -118,9 +118,9 @@ class PresupuestoService
                 ]);
             }
 
-            $pago = $presupuesto->pagos()->create(['monto' => $monto, 'fecha' => $fecha, 'estado' => 'vigente']);
+            $pago = $presupuesto->pagos()->create(['monto' => $monto, 'fecha' => $fecha, 'estado' => 'vigente', 'metodo' => $metodo]);
             AuditoriaService::registrar('crear', 'pagos', $pago->id, null, [
-                'presupuesto_id' => $presupuesto->id, 'monto' => $monto, 'saldo_restante' => $saldo - $monto,
+                'presupuesto_id' => $presupuesto->id, 'monto' => $monto, 'metodo' => $metodo, 'saldo_restante' => $saldo - $monto,
             ]);
 
             if ($saldo - $monto <= 0) {

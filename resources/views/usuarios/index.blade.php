@@ -42,6 +42,7 @@
                         </li>
                     @endforeach
                 </ul>
+                <a href="{{ route('roles.index') }}" class="btn btn-sm btn-outline-primary mt-3"><i class="bi bi-grid-3x3-gap"></i> Ver matriz de permisos</a>
             </div>
         </div>
     </div>

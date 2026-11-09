@@ -24,7 +24,7 @@ class UsuarioController extends Controller
 
     public function store(UsuarioRequest $request)
     {
-        $usuario = Usuario::create($request->validated());
+        $usuario = Usuario::create($request->validated() + ['debe_cambiar_password' => true]);
         AuditoriaService::creado($usuario);
 
         $mensaje = 'Usuario creado.';
@@ -46,6 +46,8 @@ class UsuarioController extends Controller
 
         if (empty($datos['password'])) {
             unset($datos['password']);
+        } elseif (! $usuario->is(auth()->user())) {
+            $datos['debe_cambiar_password'] = true;
         }
 
         if ($usuario->is(auth()->user())) {

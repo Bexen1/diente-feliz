@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Bloqueo;
 use App\Models\Box;
 use App\Models\Cita;
 use App\Models\Doctor;
@@ -17,13 +18,22 @@ class CitaService
 
     public const HORA_CIERRE = '20:00';
 
+    public const TOLERANCIA_MINUTOS = 15;
+
     private const TRANSICIONES = [
-        'agendada' => ['confirmada', 'atendida', 'cancelada'],
-        'reagendada' => ['confirmada', 'atendida', 'cancelada'],
-        'confirmada' => ['atendida', 'cancelada'],
+        'agendada' => ['confirmada', 'atendida', 'cancelada', 'no_asistio'],
+        'reagendada' => ['confirmada', 'atendida', 'cancelada', 'no_asistio'],
+        'confirmada' => ['atendida', 'cancelada', 'no_asistio'],
         'atendida' => [],
         'cancelada' => [],
+        'no_asistio' => [],
     ];
+
+    public static function pendienteDeCierre(Cita $cita): bool
+    {
+        return in_array($cita->estado, Cita::ESTADOS_VIGENTES, true)
+            && $cita->hora_inicio->copy()->addMinutes(self::TOLERANCIA_MINUTOS)->lte(now());
+    }
 
     public function agendar(array $datos): Cita
     {
@@ -47,7 +57,13 @@ class CitaService
     {
         if (! in_array($estado, self::TRANSICIONES[$cita->estado], true)) {
             throw ValidationException::withMessages([
-                'estado' => "Una cita {$cita->estado} no puede pasar a {$estado}.",
+                'estado' => 'Una cita '.mb_strtolower($cita->etiqueta_estado).' no puede pasar a '.mb_strtolower(Cita::ETIQUETAS[$estado] ?? $estado).'.',
+            ]);
+        }
+
+        if ($estado === 'no_asistio' && ! self::pendienteDeCierre($cita)) {
+            throw ValidationException::withMessages([
+                'estado' => 'La inasistencia se marca '.self::TOLERANCIA_MINUTOS.' minutos después de la hora de la cita.',
             ]);
         }
 
@@ -59,7 +75,13 @@ class CitaService
             $despues['motivo'] = $motivo;
         }
 
-        AuditoriaService::registrar($estado === 'cancelada' ? 'cancelar' : 'cambiar_estado', 'citas', $cita->id, $antes, $despues);
+        $accion = match ($estado) {
+            'cancelada' => 'cancelar',
+            'no_asistio' => 'marcar_inasistencia',
+            default => 'cambiar_estado',
+        };
+
+        AuditoriaService::registrar($accion, 'citas', $cita->id, $antes, $despues);
     }
 
     private function guardar(Cita $cita, array $datos, string $accion): Cita
@@ -120,6 +142,15 @@ class CitaService
             $this->rechazar('hora', "La cita queda fuera del horario de atención de {$doctor->nombre}.");
         }
 
+        $bloqueo = Bloqueo::with(['doctor.usuario', 'box'])
+            ->enFecha($inicio)
+            ->queAfectan($doctor->id, $box->id)
+            ->first();
+
+        if ($bloqueo) {
+            $this->rechazar('hora', "No se puede agendar. {$bloqueo->alcance} tiene un bloqueo {$bloqueo->periodo}: {$bloqueo->motivo}.");
+        }
+
         $cruceDoctor = $this->buscarCruce('doctor_id', $doctor->id, $inicio, $fin, $cita);
         if ($cruceDoctor) {
             $this->rechazar('hora', "No se puede agendar. {$doctor->nombre} ya tiene una cita entre "
@@ -136,7 +167,7 @@ class CitaService
     private function buscarCruce(string $columna, int $id, Carbon $inicio, Carbon $fin, Cita $cita): ?Cita
     {
         return Cita::where($columna, $id)
-            ->where('estado', '<>', 'cancelada')
+            ->whereNotIn('estado', Cita::ESTADOS_LIBERAN_HORARIO)
             ->when($cita->exists, fn ($q) => $q->where('id', '<>', $cita->id))
             ->where('hora_inicio', '>', $inicio->copy()->subMinutes(60))
             ->where('hora_inicio', '<', $fin)

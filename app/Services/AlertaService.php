@@ -13,6 +13,7 @@ class AlertaService
     {
         $alertas = [
             'citasHoy' => $this->citasDelDia(now()->toDateString(), $usuario),
+            'pendientesCierre' => $this->pendientesDeCierre($usuario),
         ];
 
         if ($usuario->tieneRol('Recepcionista')) {
@@ -27,7 +28,21 @@ class AlertaService
     {
         $consulta = Cita::with(['paciente', 'doctor.usuario', 'box'])
             ->whereDate('hora_inicio', $fecha)
-            ->where('estado', '<>', 'cancelada')
+            ->whereNotIn('estado', Cita::ESTADOS_LIBERAN_HORARIO)
+            ->orderBy('hora_inicio');
+
+        if ($usuario->esDentista()) {
+            $consulta->where('doctor_id', $usuario->doctor?->id);
+        }
+
+        return $consulta->get();
+    }
+
+    private function pendientesDeCierre(Usuario $usuario): Collection
+    {
+        $consulta = Cita::with(['paciente', 'doctor.usuario'])
+            ->whereIn('estado', Cita::ESTADOS_VIGENTES)
+            ->where('hora_inicio', '<=', now()->subMinutes(CitaService::TOLERANCIA_MINUTOS))
             ->orderBy('hora_inicio');
 
         if ($usuario->esDentista()) {

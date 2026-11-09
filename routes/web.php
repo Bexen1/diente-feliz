@@ -2,20 +2,24 @@
 
 use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BloqueoController;
 use App\Http\Controllers\BoxController;
 use App\Http\Controllers\CitaController;
 use App\Http\Controllers\ConvenioController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DoctorController;
+use App\Http\Controllers\ExportacionFichaController;
 use App\Http\Controllers\FichaController;
 use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\PlanTratamientoController;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\RadiografiaController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\RolController;
 use App\Http\Controllers\SucursalController;
 use App\Http\Controllers\TratamientoController;
 use App\Http\Controllers\UsuarioController;
@@ -49,6 +53,9 @@ Route::middleware(['auth', 'rol'])->group(function () {
         Route::post('/pacientes/{paciente}/ficha/evoluciones', [FichaController::class, 'agregarEvolucion'])->name('fichas.evoluciones');
         Route::post('/pacientes/{paciente}/ficha/radiografias', [RadiografiaController::class, 'store'])->name('fichas.radiografias');
         Route::get('/radiografias/{radiografia}/archivo', [RadiografiaController::class, 'archivo'])->name('radiografias.archivo');
+        Route::get('/pacientes/{paciente}/ficha/exportar', [ExportacionFichaController::class, 'imprimir'])->name('fichas.exportar');
+        Route::get('/pacientes/{paciente}/ficha/exportar/json', [ExportacionFichaController::class, 'descargar'])->name('fichas.exportar.json');
+        Route::post('/plan/{detalle}/realizado', [PlanTratamientoController::class, 'registrar'])->name('detalles.realizado');
     });
 
     Route::middleware('rol:Recepcionista')->group(function () {
@@ -60,6 +67,7 @@ Route::middleware(['auth', 'rol'])->group(function () {
         Route::get('/presupuestos/{presupuesto}/anular', [PresupuestoController::class, 'confirmarAnulacion'])->name('presupuestos.anular.confirmar');
         Route::patch('/presupuestos/{presupuesto}/anular', [PresupuestoController::class, 'anular'])->name('presupuestos.anular');
         Route::post('/presupuestos/{presupuesto}/pagos', [PagoController::class, 'store'])->name('pagos.store');
+        Route::get('/pagos/{pago}/comprobante', [PagoController::class, 'comprobante'])->name('pagos.comprobante');
     });
     Route::middleware('rol:Dentista,Recepcionista')->group(function () {
         Route::get('/presupuestos', [PresupuestoController::class, 'index'])->name('presupuestos.index');
@@ -73,6 +81,8 @@ Route::middleware(['auth', 'rol'])->group(function () {
 
     Route::middleware('rol:Administrador')->group(function () {
         Route::resource('usuarios', UsuarioController::class)->except(['show', 'destroy']);
+        Route::resource('roles', RolController::class)->only(['index', 'edit', 'update'])
+            ->parameters(['roles' => 'rol']);
         Route::resource('doctores', DoctorController::class)->except(['show', 'destroy'])
             ->parameters(['doctores' => 'doctor']);
         Route::post('/doctores/{doctor}/horarios', [HorarioController::class, 'store'])->name('doctores.horarios.store');
@@ -85,6 +95,8 @@ Route::middleware(['auth', 'rol'])->group(function () {
         Route::resource('convenios', ConvenioController::class)->except(['index', 'show']);
         Route::get('/convenios/{convenio}/eliminar', [ConvenioController::class, 'confirmarEliminacion'])->name('convenios.eliminar');
         Route::resource('tratamientos', TratamientoController::class)->except(['show', 'destroy']);
+        Route::resource('bloqueos', BloqueoController::class)->only(['index', 'create', 'store', 'destroy']);
+        Route::get('/bloqueos/{bloqueo}/eliminar', [BloqueoController::class, 'confirmarEliminacion'])->name('bloqueos.eliminar');
 
         Route::get('/pagos/{pago}/anular', [PagoController::class, 'confirmarAnulacion'])->name('pagos.anular.confirmar');
         Route::patch('/pagos/{pago}/anular', [PagoController::class, 'anular'])->name('pagos.anular');

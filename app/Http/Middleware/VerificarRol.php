@@ -21,6 +21,10 @@ class VerificarRol
             return redirect()->route('login')->withErrors(['email' => 'Su cuenta está desactivada.']);
         }
 
+        if ($usuario->debe_cambiar_password && ! $request->routeIs('perfil.edit', 'perfil.update', 'logout')) {
+            return redirect()->route('perfil.edit')->with('error', 'Debe cambiar su contraseña antes de continuar.');
+        }
+
         if ($roles !== [] && ! $usuario->tieneRol(...$roles)) {
             AuditoriaService::registrar('acceso_denegado', 'rutas', null, null, [
                 'ruta' => $request->path(),

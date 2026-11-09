@@ -18,7 +18,9 @@
     ];
     $menuAdmin = [
         ['usuarios.index', 'Usuarios', 'bi-person-gear'],
+        ['roles.index', 'Roles y permisos', 'bi-shield-lock'],
         ['doctores.index', 'Doctores y horarios', 'bi-person-badge'],
+        ['bloqueos.index', 'Bloqueos de agenda', 'bi-calendar-x'],
         ['sucursales.index', 'Sucursales', 'bi-building'],
         ['box.index', 'Box', 'bi-door-open'],
         ['convenios.index', 'Convenios', 'bi-patch-check'],
@@ -79,7 +81,12 @@
 
     <main class="flex-grow-1 p-3 p-md-4 p-xl-5 contenido">
         @if (session('exito'))
-            <div class="alert alert-success" role="status"><i class="bi bi-check-circle-fill"></i><span>{{ session('exito') }}</span></div>
+            <div class="alert alert-success align-items-center" role="status">
+                <i class="bi bi-check-circle-fill"></i><span class="flex-grow-1">{{ session('exito') }}</span>
+                @if (session('comprobante') && Route::has('pagos.comprobante'))
+                    <a href="{{ route('pagos.comprobante', session('comprobante')) }}" class="btn btn-sm btn-outline-success" target="_blank" rel="noopener"><i class="bi bi-printer"></i> Imprimir comprobante</a>
+                @endif
+            </div>
         @endif
         @if (session('error'))
             <div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ session('error') }}</span></div>

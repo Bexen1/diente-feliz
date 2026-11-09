@@ -9,7 +9,20 @@ class Cita extends Model
 {
     public const DURACIONES = [30, 45, 60];
 
-    public const ESTADOS = ['agendada', 'confirmada', 'reagendada', 'atendida', 'cancelada'];
+    public const ESTADOS = ['agendada', 'confirmada', 'reagendada', 'atendida', 'cancelada', 'no_asistio'];
+
+    public const ESTADOS_LIBERAN_HORARIO = ['cancelada', 'no_asistio'];
+
+    public const ESTADOS_VIGENTES = ['agendada', 'confirmada', 'reagendada'];
+
+    public const ETIQUETAS = [
+        'agendada' => 'Agendada',
+        'confirmada' => 'Confirmada',
+        'reagendada' => 'Reagendada',
+        'atendida' => 'Atendida',
+        'cancelada' => 'Cancelada',
+        'no_asistio' => 'No asistió',
+    ];
 
     protected $table = 'citas';
 
@@ -36,6 +49,11 @@ class Cita extends Model
     public function box(): BelongsTo
     {
         return $this->belongsTo(Box::class, 'box_id');
+    }
+
+    public function getEtiquetaEstadoAttribute(): string
+    {
+        return self::ETIQUETAS[$this->estado] ?? ucfirst($this->estado);
     }
 
     public function getDuracionAttribute(): int

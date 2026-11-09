@@ -9,14 +9,20 @@ class DetallePresupuesto extends Model
 {
     protected $table = 'detalle_presupuestos';
 
-    protected $fillable = ['presupuesto_id', 'tratamiento_id', 'cantidad', 'subtotal'];
+    protected $fillable = ['presupuesto_id', 'tratamiento_id', 'cantidad', 'cantidad_realizada', 'subtotal'];
 
     protected function casts(): array
     {
         return [
             'cantidad' => 'integer',
+            'cantidad_realizada' => 'integer',
             'subtotal' => 'decimal:2',
         ];
+    }
+
+    public function pendientes(): int
+    {
+        return max(0, $this->cantidad - $this->cantidad_realizada);
     }
 
     public function presupuesto(): BelongsTo

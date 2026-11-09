@@ -13,7 +13,11 @@
             <small class="text-body-secondary">{{ $paciente->nombre }} · <span class="mono">{{ $paciente->rut }}</span>
                 · {{ $paciente->convenio?->institucion ?? 'Particular' }}</small>
         </div>
-        <a href="{{ route('pacientes.show', $paciente) }}" class="btn btn-outline-primary"><i class="bi bi-person-vcard"></i> Datos del paciente</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ route('fichas.exportar', $paciente) }}" class="btn btn-outline-primary" target="_blank" rel="noopener"><i class="bi bi-file-earmark-medical"></i> Exportar ficha</a>
+            <a href="{{ route('fichas.exportar.json', $paciente) }}" class="btn btn-outline-primary"><i class="bi bi-filetype-json"></i> Descargar JSON</a>
+            <a href="{{ route('pacientes.show', $paciente) }}" class="btn btn-outline-primary"><i class="bi bi-person-vcard"></i> Datos del paciente</a>
+        </div>
     </div>
 
     <div class="panel mb-3">
@@ -43,6 +47,7 @@
                                                 aria-pressed="false"
                                                 aria-label="Pieza {{ $pieza }}: {{ OdontogramaService::ESTADOS[$hallazgo['estado']][1] }}">
                                             <span class="pieza-numero">{{ $pieza }}</span>
+                                            @include('partials.diente', ['pieza' => $pieza, 'hallazgo' => $hallazgo])
                                             <span class="pieza-letra">{{ OdontogramaService::ESTADOS[$hallazgo['estado']][0] ?: '·' }}</span>
                                         </button>
                                     @endforeach
@@ -54,7 +59,10 @@
 
                 <div class="leyenda small mt-3">
                     @foreach (OdontogramaService::ESTADOS as $clave => [$letra, $nombre])
-                        <span><span class="muestra estado-{{ $clave }}">{{ $letra ?: '·' }}</span> {{ $nombre }}</span>
+                        <span class="leyenda-item">
+                            @include('partials.diente', ['pieza' => 11, 'hallazgo' => ['estado' => $clave, 'caras' => in_array($clave, ['caries', 'restauracion']) ? ['oclusal', 'mesial'] : []]])
+                            <strong>{{ $letra ?: '·' }}</strong> {{ $nombre }}
+                        </span>
                     @endforeach
                 </div>
             </div>
@@ -99,6 +107,82 @@
                 <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> Guardar hallazgo</button>
             </form>
         </div>
+    </div>
+
+    <div class="panel mb-3 tabla-contenedor">
+        <h2><i class="bi bi-list-check"></i> Plan de tratamiento</h2>
+        @error('detalle') <div class="alert alert-danger"><i class="bi bi-x-octagon-fill"></i><span>{{ $message }}</span></div> @enderror
+        @forelse ($plan as $item)
+            @php($presupuesto = $item['presupuesto'])
+            <div @class(['mb-4' => ! $loop->last])>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <div>
+                        <strong>Presupuesto N.° {{ $presupuesto->id }}</strong>
+                        <span class="text-body-secondary small">· {{ $presupuesto->created_at->format('d/m/Y') }} · {{ $presupuesto->doctor->nombre }}</span>
+                        @include('presupuestos.estado', ['estado' => $presupuesto->estado])
+                    </div>
+                    <span class="small mono">{{ $item['realizados'] }} de {{ $item['total'] }} realizados · {{ $item['avance'] }} %</span>
+                </div>
+                <div class="barra mb-2" role="img" aria-label="Avance del plan: {{ $item['avance'] }} por ciento">
+                    <div style="width: {{ $item['avance'] }}%;"></div>
+                </div>
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                    @foreach ($presupuesto->detalles as $detalle)
+                        <tr>
+                            <td>{{ $detalle->tratamiento->nombre }}</td>
+                            <td class="text-end mono" style="width: 120px;">{{ $detalle->cantidad_realizada }} / {{ $detalle->cantidad }}</td>
+                            <td class="text-end" style="width: 190px;">
+                                @if ($detalle->pendientes() > 0)
+                                    <form method="POST" action="{{ route('detalles.realizado', $detalle) }}">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-check2-circle"></i> Registrar realizado</button>
+                                    </form>
+                                @else
+                                    <span class="badge bg-success-subtle text-success-emphasis"><i class="bi bi-check-circle"></i> Completo</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @empty
+            <p class="text-body-secondary mb-0">El paciente no tiene presupuestos aceptados.</p>
+        @endforelse
+    </div>
+
+    <div class="panel mb-3 tabla-contenedor" id="historial">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <h2 class="mb-0"><i class="bi bi-clock-history"></i> Historial del odontograma</h2>
+            <form method="GET" action="{{ route('fichas.show', $paciente) }}#historial" class="d-flex gap-2">
+                <select name="pieza" class="form-select form-select-sm" aria-label="Filtrar por pieza">
+                    <option value="">Todas las piezas</option>
+                    @foreach (OdontogramaService::piezas() as $numero)
+                        <option value="{{ $numero }}" @selected($piezaFiltro === $numero)>Pieza {{ $numero }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-funnel"></i> Filtrar</button>
+            </form>
+        </div>
+        @if ($historial->isEmpty())
+            <p class="text-body-secondary mb-0">Sin cambios registrados{{ $piezaFiltro ? ' para la pieza '.$piezaFiltro : '' }}.</p>
+        @else
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>Fecha</th><th>Pieza</th><th>Cambio</th><th>Caras</th><th>Registrado por</th></tr></thead>
+                <tbody>
+                @foreach ($historial as $cambio)
+                    <tr>
+                        <td class="mono">{{ $cambio['fecha']->format('d/m/Y H:i') }}</td>
+                        <td class="mono">{{ $cambio['pieza'] }}</td>
+                        <td>{{ $cambio['antes'] }} <i class="bi bi-arrow-right"></i> <strong>{{ $cambio['despues'] }}</strong></td>
+                        <td>{{ implode(', ', $cambio['caras']) ?: '—' }}</td>
+                        <td>{{ $cambio['usuario'] }}</td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        @endif
     </div>
 
     <div class="row g-3">

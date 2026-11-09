@@ -56,7 +56,7 @@ class AdministracionTest extends TestCase
 
         $contenido = $respuesta->streamedContent();
         $this->assertStringStartsWith("\xEF\xBB\xBF", $contenido);
-        $this->assertStringContainsString('Fecha;"Presupuesto N.°";RUT;Paciente;Doctor;Monto;Estado', $contenido);
+        $this->assertStringContainsString('Fecha;"Presupuesto N.°";RUT;Paciente;Doctor;Monto;Método;Estado', $contenido);
         $this->assertStringContainsString('María Contreras', $contenido);
     }
 

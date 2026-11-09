@@ -15,10 +15,11 @@ class PerfilController extends Controller
     public function update(CambiarContrasenaRequest $request)
     {
         $usuario = $request->user();
-        $usuario->update(['password' => $request->validated('password')]);
+        $eraObligatorio = $usuario->debe_cambiar_password;
+        $usuario->update(['password' => $request->validated('password'), 'debe_cambiar_password' => false]);
 
         AuditoriaService::registrar('cambiar_contrasena', 'usuarios', $usuario->id);
 
-        return redirect()->route('perfil.edit')->with('exito', 'Contraseña actualizada.');
+        return redirect()->route($eraObligatorio ? 'inicio' : 'perfil.edit')->with('exito', 'Contraseña actualizada.');
     }
 }

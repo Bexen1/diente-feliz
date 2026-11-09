@@ -9,7 +9,19 @@ class Pago extends Model
 {
     protected $table = 'pagos';
 
-    protected $fillable = ['presupuesto_id', 'monto', 'fecha', 'estado'];
+    public const METODOS = [
+        'efectivo' => 'Efectivo',
+        'debito' => 'Tarjeta de débito',
+        'credito' => 'Tarjeta de crédito',
+        'transferencia' => 'Transferencia',
+    ];
+
+    protected $fillable = ['presupuesto_id', 'monto', 'fecha', 'estado', 'metodo'];
+
+    public function getNombreMetodoAttribute(): string
+    {
+        return self::METODOS[$this->metodo] ?? ucfirst((string) $this->metodo);
+    }
 
     protected function casts(): array
     {

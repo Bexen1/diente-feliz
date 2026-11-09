@@ -10,6 +10,10 @@
             <h1>{{ $paciente->nombre }}</h1>
             <small class="text-body-secondary mono">{{ $paciente->rut }}</small>
             @unless ($paciente->activo) <span class="badge text-bg-secondary ms-2">Inactivo</span> @endunless
+            @php($inasistencias = $paciente->citas->where('estado', 'no_asistio')->count())
+            @if ($inasistencias >= 2)
+                <span class="badge bg-warning-subtle text-warning-emphasis ms-2"><i class="bi bi-person-x"></i> {{ $inasistencias }} inasistencias</span>
+            @endif
         </div>
         <div class="d-flex gap-2 flex-wrap">
             @if ($usuario->tieneRol('Dentista') && Route::has('fichas.show'))

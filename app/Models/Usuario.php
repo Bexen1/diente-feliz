@@ -10,7 +10,7 @@ class Usuario extends Authenticatable
 {
     protected $table = 'usuarios';
 
-    protected $fillable = ['nombre', 'email', 'password', 'rol_id', 'activo'];
+    protected $fillable = ['nombre', 'email', 'password', 'rol_id', 'activo', 'debe_cambiar_password'];
 
     protected $hidden = ['password'];
 
@@ -19,6 +19,7 @@ class Usuario extends Authenticatable
         return [
             'password' => 'hashed',
             'activo' => 'boolean',
+            'debe_cambiar_password' => 'boolean',
         ];
     }
 

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" class="claro">
 <head>
     @include('partials.head')
     <title>Orden de tratamiento N.° {{ $presupuesto->id }} · Diente Feliz</title>

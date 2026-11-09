@@ -15,7 +15,7 @@ class EstadoCitaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'estado' => ['required', Rule::in(['confirmada', 'atendida', 'cancelada'])],
+            'estado' => ['required', Rule::in(['confirmada', 'atendida', 'cancelada', 'no_asistio'])],
             'motivo' => ['required_if:estado,cancelada', 'nullable', 'string', 'min:5', 'max:500'],
         ];
     }

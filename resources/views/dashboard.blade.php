@@ -123,7 +123,7 @@
                     <div class="indicador-etiqueta">Tasa de cancelación (mes)</div>
                     <div class="indicador-valor mono">{{ number_format($datos['cancelacion']['tasa'], 1, ',', '.') }} %</div>
                     <div class="small text-body-secondary">
-                        {{ $datos['cancelacion']['canceladas'] }} de {{ $datos['cancelacion']['total'] }} citas
+                        {{ $datos['cancelacion']['canceladas'] }} de {{ $datos['cancelacion']['total'] }} citas · {{ $datos['cancelacion']['inasistencias'] }} inasistencias
                     </div>
                 </div>
             </div>
@@ -258,9 +258,9 @@
                 @forelse ($estados as $estado => $cantidad)
                     <div class="mb-2">
                         <div class="d-flex justify-content-between small">
-                            <span>{{ ucfirst($estado) }}</span><span class="mono">{{ $cantidad }}</span>
+                            <span>{{ \App\Models\Cita::ETIQUETAS[$estado] ?? ucfirst($estado) }}</span><span class="mono">{{ $cantidad }}</span>
                         </div>
-                        <div class="barra" role="img" aria-label="{{ ucfirst($estado) }}: {{ $cantidad }} citas">
+                        <div class="barra" role="img" aria-label="{{ \App\Models\Cita::ETIQUETAS[$estado] ?? ucfirst($estado) }}: {{ $cantidad }} citas">
                             <div style="width: {{ round($cantidad / $totalCitas * 100) }}%;"></div>
                         </div>
                     </div>
@@ -322,6 +322,33 @@
                         <span class="mono fw-bold">@pesos(array_sum(array_column($datos['descuentos'], 'descuento')))</span>
                     </div>
                 @endif
+            </div>
+        </div>
+    </div>
+
+    @php
+        $metodos = $datos['porMetodo'];
+        $totalMetodos = array_sum(array_column($metodos, 'total')) ?: 1;
+    @endphp
+    <div class="row g-3 mb-3">
+        <div class="col-12">
+            <div class="panel">
+                <h2><i class="bi bi-wallet2"></i> Ingresos por método de pago (mes)</h2>
+                <div class="row g-3">
+                    @foreach ($metodos as $fila)
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="d-flex justify-content-between small">
+                                <span>{{ $fila['metodo'] }}</span>
+                                <span class="mono">{{ round($fila['total'] / $totalMetodos * 100) }} %</span>
+                            </div>
+                            <div class="fs-5 fw-bold mono">@pesos($fila['total'])</div>
+                            <div class="barra mb-1" role="img" aria-label="{{ $fila['metodo'] }}: {{ number_format($fila['total'], 0, ',', '.') }} pesos">
+                                <div style="width: {{ round($fila['total'] / $totalMetodos * 100) }}%;"></div>
+                            </div>
+                            <div class="small text-body-secondary">{{ $fila['pagos'] }} pagos</div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </div>
     </div>

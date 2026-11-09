@@ -53,6 +53,21 @@
         @endisset
     </div>
 
+    @if ($alertas['pendientesCierre']->isNotEmpty())
+        <div class="panel mb-3" style="border-color: #f2cf8c;">
+            <h2><i class="bi bi-hourglass-bottom" style="color:#b45309;"></i> Citas pendientes de cierre ({{ $alertas['pendientesCierre']->count() }})</h2>
+            @foreach ($alertas['pendientesCierre']->take(8) as $cita)
+                <div class="fila-lista">
+                    <span>
+                        <span class="mono fw-bold">{{ $cita->hora_inicio->format('d/m H:i') }}</span> · {{ $cita->paciente->nombre }}
+                        <small class="text-body-secondary">· {{ $cita->doctor->nombre }}</small>
+                    </span>
+                    <a href="{{ route('citas.index', ['fecha' => $cita->hora_inicio->toDateString()]) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-calendar3"></i> Cerrar en agenda</a>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     <div class="row g-3">
         <div class="col-lg-6">
             <div class="panel h-100">

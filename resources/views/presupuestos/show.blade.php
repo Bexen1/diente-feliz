@@ -48,7 +48,14 @@
                     @foreach ($presupuesto->detalles as $detalle)
                         <tr>
                             <td>{{ $detalle->tratamiento->nombre }}</td>
-                            <td class="text-end mono">{{ $detalle->cantidad }}</td>
+                            <td class="text-end mono">
+                                {{ $detalle->cantidad }}
+                                @if (in_array($presupuesto->estado, ['aceptado', 'pagado']))
+                                    <span @class(['small', 'text-success' => $detalle->pendientes() === 0, 'text-body-secondary' => $detalle->pendientes() > 0])>
+                                        · {{ $detalle->cantidad_realizada }} realizado{{ $detalle->cantidad_realizada === 1 ? '' : 's' }}
+                                    </span>
+                                @endif
+                            </td>
                             <td class="text-end mono">@pesos($detalle->subtotal)</td>
                         </tr>
                     @endforeach
@@ -75,9 +82,13 @@
                         <tbody>
                         @forelse ($presupuesto->pagos as $pago)
                             <tr @class(['text-decoration-line-through text-body-secondary' => $pago->estado === 'anulado'])>
-                                <td class="mono">{{ $pago->fecha->format('d/m/Y') }}</td>
+                                <td>
+                                    <span class="mono">{{ $pago->fecha->format('d/m/Y') }}</span>
+                                    <div class="small text-body-secondary">{{ $pago->nombre_metodo }}</div>
+                                </td>
                                 <td class="text-end mono">@pesos($pago->monto)</td>
-                                <td class="text-end">
+                                <td class="text-end text-nowrap">
+                                    <a href="{{ route('pagos.comprobante', $pago) }}" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener" aria-label="Comprobante del pago"><i class="bi bi-receipt-cutoff"></i></a>
                                     @if ($pago->estado === 'anulado')
                                         <span class="badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-slash-circle"></i> Anulado</span>
                                     @elseif ($usuario->esAdministrador())
@@ -102,6 +113,15 @@
                         <h2><i class="bi bi-cash-coin"></i> Registrar pago o abono</h2>
                         @include('partials.campo', ['nombre' => 'monto', 'etiqueta' => 'Monto (CLP)', 'tipo' => 'number', 'paso' => '1'])
                         @include('partials.campo', ['nombre' => 'fecha', 'etiqueta' => 'Fecha', 'tipo' => 'date', 'valor' => now()->toDateString()])
+                        <div class="mb-3">
+                            <label for="metodo" class="form-label">Método de pago</label>
+                            <select id="metodo" name="metodo" @class(['form-select', 'is-invalid' => $errors->has('metodo')])>
+                                @foreach (\App\Models\Pago::METODOS as $clave => $nombre)
+                                    <option value="{{ $clave }}" @selected(old('metodo', 'efectivo') === $clave)>{{ $nombre }}</option>
+                                @endforeach
+                            </select>
+                            @error('metodo') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
                         <button type="submit" class="btn btn-primary w-100"><i class="bi bi-cash-coin"></i> Registrar pago</button>
                     </form>
                 @endif

@@ -38,7 +38,28 @@ class DashboardService
             'cancelacion' => $this->cancelacion($desde, $hasta),
             'demanda' => $this->demanda($desde, $hasta),
             'sucursales' => $this->actividadPorSucursal($desde, $hasta),
+            'porMetodo' => $this->ingresosPorMetodo($desde, $hasta),
         ];
+    }
+
+    private function ingresosPorMetodo(Carbon $desde, Carbon $hasta): array
+    {
+        $totales = Pago::where('estado', 'vigente')
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
+            ->selectRaw('metodo, COUNT(*) AS pagos, SUM(monto) AS total')
+            ->groupBy('metodo')
+            ->get()
+            ->keyBy('metodo');
+
+        return collect(Pago::METODOS)
+            ->map(fn ($nombre, $clave) => [
+                'metodo' => $nombre,
+                'pagos' => (int) ($totales[$clave]->pagos ?? 0),
+                'total' => (float) ($totales[$clave]->total ?? 0),
+            ])
+            ->sortByDesc('total')
+            ->values()
+            ->all();
     }
 
     private function minutosDeAtencionPorDia(): int
@@ -51,13 +72,13 @@ class DashboardService
         $ahora = now();
         $boxActivos = Box::where('activo', true)->count();
 
-        $ocupadosAhora = Cita::where('estado', '<>', 'cancelada')
+        $ocupadosAhora = Cita::whereNotIn('estado', Cita::ESTADOS_LIBERAN_HORARIO)
             ->where('hora_inicio', '<=', $ahora)
             ->where('hora_fin', '>', $ahora)
             ->distinct('box_id')
             ->count('box_id');
 
-        $minutosAgendados = Cita::where('estado', '<>', 'cancelada')
+        $minutosAgendados = Cita::whereNotIn('estado', Cita::ESTADOS_LIBERAN_HORARIO)
             ->whereDate('hora_inicio', $ahora->toDateString())
             ->get(['hora_inicio', 'hora_fin'])
             ->sum(fn ($c) => $c->hora_inicio->diffInMinutes($c->hora_fin));
@@ -291,7 +312,7 @@ class DashboardService
         $minutosDisponibles = $diasHabiles * $this->minutosDeAtencionPorDia();
 
         $minutosUsados = DB::table('citas')
-            ->where('estado', '<>', 'cancelada')
+            ->whereNotIn('estado', Cita::ESTADOS_LIBERAN_HORARIO)
             ->whereBetween('hora_inicio', [$desde, $hasta])
             ->groupBy('box_id')
             ->selectRaw('box_id, SUM(EXTRACT(EPOCH FROM (hora_fin - hora_inicio)) / 60) AS minutos')
@@ -319,10 +340,12 @@ class DashboardService
     {
         $total = Cita::whereBetween('hora_inicio', [$desde, $hasta])->count();
         $canceladas = Cita::whereBetween('hora_inicio', [$desde, $hasta])->where('estado', 'cancelada')->count();
+        $inasistencias = Cita::whereBetween('hora_inicio', [$desde, $hasta])->where('estado', 'no_asistio')->count();
 
         return [
             'total' => $total,
             'canceladas' => $canceladas,
+            'inasistencias' => $inasistencias,
             'tasa' => $total > 0 ? round($canceladas / $total * 100, 1) : 0,
         ];
     }
@@ -339,7 +362,7 @@ class DashboardService
         }
 
         $filas = DB::table('citas')
-            ->where('estado', '<>', 'cancelada')
+            ->whereNotIn('estado', Cita::ESTADOS_LIBERAN_HORARIO)
             ->whereBetween('hora_inicio', [$inicio, $hasta])
             ->selectRaw('EXTRACT(ISODOW FROM hora_inicio) AS dia, EXTRACT(HOUR FROM hora_inicio) AS hora, COUNT(*) AS total')
             ->groupBy('dia', 'hora')
@@ -368,7 +391,7 @@ class DashboardService
             ->leftJoin('box', 'box.sucursal_id', '=', 'sucursales.id')
             ->leftJoin('citas', function ($join) use ($desde, $hasta) {
                 $join->on('citas.box_id', '=', 'box.id')
-                    ->where('citas.estado', '<>', 'cancelada')
+                    ->whereNotIn('citas.estado', Cita::ESTADOS_LIBERAN_HORARIO)
                     ->whereBetween('citas.hora_inicio', [$desde, $hasta]);
             })
             ->groupBy('sucursales.id', 'sucursales.nombre')

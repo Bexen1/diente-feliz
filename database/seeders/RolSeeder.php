@@ -9,8 +9,14 @@ class RolSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach ([Rol::ADMINISTRADOR, Rol::DENTISTA, Rol::RECEPCIONISTA] as $nombre) {
-            Rol::create(['nombre' => $nombre]);
+        $roles = [
+            Rol::ADMINISTRADOR => 'Gestiona usuarios, catálogos, finanzas y reportes. Tiene además todos los permisos de los demás roles.',
+            Rol::DENTISTA => 'Atiende pacientes: ficha clínica, odontograma, radiografías y su propia agenda.',
+            Rol::RECEPCIONISTA => 'Atiende la recepción: pacientes, agenda de todos los profesionales, presupuestos y pagos.',
+        ];
+
+        foreach ($roles as $nombre => $descripcion) {
+            Rol::create(['nombre' => $nombre, 'descripcion' => $descripcion]);
         }
     }
 }

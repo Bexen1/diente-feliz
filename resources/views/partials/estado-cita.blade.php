@@ -5,7 +5,8 @@
         'reagendada' => ['bg-warning-subtle text-warning-emphasis', 'bi-arrow-repeat'],
         'atendida' => ['bg-success-subtle text-success-emphasis', 'bi-check-circle'],
         'cancelada' => ['bg-danger-subtle text-danger-emphasis', 'bi-x-circle'],
+        'no_asistio' => ['bg-dark-subtle text-dark-emphasis', 'bi-person-x'],
     ];
     [$clases, $icono] = $estilos[$estado] ?? ['bg-secondary-subtle text-secondary-emphasis', 'bi-circle'];
 @endphp
-<span class="badge {{ $clases }}"><i class="bi {{ $icono }}"></i> {{ ucfirst($estado) }}</span>
+<span class="badge {{ $clases }}"><i class="bi {{ $icono }}"></i> {{ \App\Models\Cita::ETIQUETAS[$estado] ?? ucfirst($estado) }}</span>

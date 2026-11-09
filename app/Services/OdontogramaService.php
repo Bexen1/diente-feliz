@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\AuditoriaLog;
 use App\Models\FichaClinica;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class OdontogramaService
@@ -24,6 +26,32 @@ class OdontogramaService
     ];
 
     public const CARAS = ['vestibular', 'lingual', 'mesial', 'distal', 'oclusal'];
+
+    public function historial(FichaClinica $ficha, ?int $pieza = null, int $limite = 15): Collection
+    {
+        return AuditoriaLog::with('usuario')
+            ->where('tabla_afectada', 'fichas_clinicas')
+            ->where('registro_id', $ficha->id)
+            ->where('accion', 'actualizar_odontograma')
+            ->when($pieza, fn ($q) => $q->whereRaw("jsonb_exists(payload_cambios_json->'despues', ?)", [(string) $pieza]))
+            ->orderByDesc('id')
+            ->limit($limite)
+            ->get()
+            ->map(function ($registro) {
+                $despues = $registro->payload_cambios_json['despues'] ?? [];
+                $antes = $registro->payload_cambios_json['antes'] ?? [];
+                $numero = (int) array_key_first($despues);
+
+                return [
+                    'fecha' => $registro->created_at,
+                    'usuario' => $registro->usuario?->nombre ?? '—',
+                    'pieza' => $numero,
+                    'antes' => self::ESTADOS[$antes[$numero]['estado'] ?? 'sano'][1] ?? '—',
+                    'despues' => self::ESTADOS[$despues[$numero]['estado'] ?? 'sano'][1] ?? '—',
+                    'caras' => $despues[$numero]['caras'] ?? [],
+                ];
+            });
+    }
 
     public static function piezas(): array
     {

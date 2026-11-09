@@ -7,6 +7,12 @@
         <h1>Mi perfil</h1>
     </div>
 
+    @if (auth()->user()->debe_cambiar_password && ! session('error'))
+        <div class="alert alert-warning align-items-center" style="max-width: 640px;">
+            <i class="bi bi-key-fill"></i><span>Su contraseña fue asignada por el Administrador. Cámbiela para continuar.</span>
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('perfil.update') }}" class="panel" style="max-width: 640px;">
         @csrf
         @method('PUT')

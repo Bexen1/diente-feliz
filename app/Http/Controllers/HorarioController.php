@@ -6,15 +6,28 @@ use App\Http\Requests\HorarioRequest;
 use App\Models\Doctor;
 use App\Models\Horario;
 use App\Services\AuditoriaService;
+use Illuminate\Support\Facades\DB;
 
 class HorarioController extends Controller
 {
     public function store(HorarioRequest $request, Doctor $doctor)
     {
-        $horario = $doctor->horarios()->create($request->validated());
-        AuditoriaService::creado($horario);
+        $dias = collect($request->validated('dias'))->map(fn ($dia) => (int) $dia)->sort()->values();
 
-        return redirect()->route('doctores.edit', $doctor)->with('exito', 'Bloque de horario agregado.');
+        DB::transaction(function () use ($doctor, $dias, $request) {
+            foreach ($dias as $dia) {
+                $horario = $doctor->horarios()->create([
+                    'dia_semana' => $dia,
+                    'hora_inicio' => $request->validated('hora_inicio'),
+                    'hora_fin' => $request->validated('hora_fin'),
+                ]);
+                AuditoriaService::creado($horario);
+            }
+        });
+
+        $mensaje = $dias->count() === 1 ? 'Bloque de horario agregado.' : "Bloque de horario agregado en {$dias->count()} días.";
+
+        return redirect()->route('doctores.edit', $doctor)->with('exito', $mensaje);
     }
 
     public function destroy(Doctor $doctor, Horario $horario)

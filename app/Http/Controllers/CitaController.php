@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AgendaFiltroRequest;
 use App\Http\Requests\CitaRequest;
 use App\Http\Requests\EstadoCitaRequest;
+use App\Models\Bloqueo;
 use App\Models\Box;
 use App\Models\Cita;
 use App\Models\Doctor;
 use App\Models\Paciente;
+use App\Models\Sucursal;
 use App\Services\CitaService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
@@ -22,29 +24,57 @@ class CitaController extends Controller
         $usuario = $request->user();
         $fecha = Carbon::parse($request->validated('fecha') ?? today());
 
+        $vista = $request->validated('vista') ?? 'dia';
+
         $doctorId = $usuario->esDentista() ? $usuario->doctor?->id : $request->validated('doctor_id');
         $boxId = $request->validated('box_id');
+        $sucursalId = $request->validated('sucursal_id');
+
+        if ($vista === 'semana') {
+            $desde = $fecha->copy()->startOfWeek(Carbon::MONDAY);
+            $hasta = $desde->copy()->addDays(4)->endOfDay();
+        } else {
+            $desde = $fecha->copy()->startOfDay();
+            $hasta = $fecha->copy()->endOfDay();
+        }
 
         $boxes = Box::with('sucursal')->where('activo', true)
+            ->when($sucursalId, fn ($q) => $q->where('sucursal_id', $sucursalId))
             ->when($boxId, fn ($q) => $q->where('id', $boxId))
             ->orderBy('sucursal_id')->orderBy('nombre')->get();
 
-        $citasDelDia = Cita::with(['paciente', 'doctor.usuario', 'box'])
-            ->whereDate('hora_inicio', $fecha)
+        $citas = Cita::with(['paciente', 'doctor.usuario', 'box'])
+            ->whereBetween('hora_inicio', [$desde, $hasta])
             ->when($doctorId, fn ($q) => $q->where('doctor_id', $doctorId))
             ->when($boxId, fn ($q) => $q->where('box_id', $boxId))
+            ->when($sucursalId, fn ($q) => $q->whereHas('box', fn ($b) => $b->where('sucursal_id', $sucursalId)))
             ->orderBy('hora_inicio')
+            ->get();
+
+        $bloqueos = Bloqueo::with(['doctor.usuario', 'box'])
+            ->whereDate('fecha_inicio', '<=', $hasta)
+            ->whereDate('fecha_fin', '>=', $desde)
+            ->when($doctorId || $boxId, fn ($q) => $q->queAfectan($doctorId, $boxId))
+            ->orderBy('fecha_inicio')
             ->get();
 
         return view('citas.index', [
             'fecha' => $fecha,
+            'vista' => $vista,
+            'desde' => $desde,
+            'hasta' => $hasta,
             'boxes' => $boxes,
-            'citas' => $citasDelDia,
+            'citas' => $citas,
+            'bloqueos' => $bloqueos,
             'doctores' => Doctor::with('usuario')->where('activo', true)->get()->sortBy('nombre'),
-            'todosLosBox' => Box::where('activo', true)->orderBy('nombre')->get(),
+            'sucursales' => Sucursal::orderBy('nombre')->get(),
+            'todosLosBox' => Box::where('activo', true)
+                ->when($sucursalId, fn ($q) => $q->where('sucursal_id', $sucursalId))
+                ->orderBy('nombre')->get(),
             'pacientes' => Paciente::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'rut']),
             'filtroDoctor' => $doctorId,
             'filtroBox' => $boxId,
+            'filtroSucursal' => $sucursalId,
             'franjas' => $this->franjas(),
         ]);
     }

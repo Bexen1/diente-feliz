@@ -11,25 +11,41 @@
 @endphp
 
 @section('contenido')
+    @php
+        $filtros = ['doctor_id' => $filtroDoctor, 'box_id' => $filtroBox, 'sucursal_id' => $filtroSucursal, 'vista' => $vista];
+        $paso = $vista === 'semana' ? 7 : 1;
+    @endphp
+
     <div class="titulo-pagina">
         <div>
             <h1>Agenda</h1>
-            <small class="text-body-secondary">{{ ucfirst($fecha->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY')) }}</small>
+            <small class="text-body-secondary">
+                @if ($vista === 'semana')
+                    Semana del {{ $desde->locale('es')->isoFormat('D [de] MMMM') }} al {{ $hasta->locale('es')->isoFormat('D [de] MMMM [de] YYYY') }}
+                @else
+                    {{ ucfirst($fecha->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY')) }}
+                @endif
+            </small>
         </div>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-primary" href="{{ route('citas.index', ['fecha' => $fecha->copy()->subDay()->toDateString(), 'doctor_id' => $filtroDoctor, 'box_id' => $filtroBox]) }}" aria-label="Día anterior"><i class="bi bi-chevron-left"></i></a>
-            <a class="btn btn-outline-primary" href="{{ route('citas.index', ['doctor_id' => $filtroDoctor, 'box_id' => $filtroBox]) }}"><i class="bi bi-calendar-event"></i> Hoy</a>
-            <a class="btn btn-outline-primary" href="{{ route('citas.index', ['fecha' => $fecha->copy()->addDay()->toDateString(), 'doctor_id' => $filtroDoctor, 'box_id' => $filtroBox]) }}" aria-label="Día siguiente"><i class="bi bi-chevron-right"></i></a>
+        <div class="d-flex gap-2 flex-wrap">
+            <div class="btn-group" role="group" aria-label="Vista de la agenda">
+                <a href="{{ route('citas.index', ['fecha' => $fecha->toDateString(), 'vista' => 'dia'] + $filtros) }}" @class(['btn', 'btn-primary' => $vista === 'dia', 'btn-outline-primary' => $vista !== 'dia'])><i class="bi bi-calendar-day"></i> Día</a>
+                <a href="{{ route('citas.index', ['fecha' => $fecha->toDateString(), 'vista' => 'semana'] + $filtros) }}" @class(['btn', 'btn-primary' => $vista === 'semana', 'btn-outline-primary' => $vista !== 'semana'])><i class="bi bi-calendar-week"></i> Semana</a>
+            </div>
+            <a class="btn btn-outline-primary" href="{{ route('citas.index', ['fecha' => $fecha->copy()->subDays($paso)->toDateString()] + $filtros) }}" aria-label="Anterior"><i class="bi bi-chevron-left"></i></a>
+            <a class="btn btn-outline-primary" href="{{ route('citas.index', $filtros) }}"><i class="bi bi-calendar-event"></i> Hoy</a>
+            <a class="btn btn-outline-primary" href="{{ route('citas.index', ['fecha' => $fecha->copy()->addDays($paso)->toDateString()] + $filtros) }}" aria-label="Siguiente"><i class="bi bi-chevron-right"></i></a>
         </div>
     </div>
 
     <form method="GET" class="panel mb-3 row g-2 align-items-end">
-        <div class="col-sm-3">
+        <input type="hidden" name="vista" value="{{ $vista }}">
+        <div class="col-sm-6 col-lg-2">
             <label for="filtro-fecha" class="form-label">Día</label>
             <input type="date" id="filtro-fecha" name="fecha" value="{{ $fecha->toDateString() }}" class="form-control">
         </div>
         @unless ($esDentista)
-            <div class="col-sm-4">
+            <div class="col-sm-6 col-lg-3">
                 <label for="filtro-doctor" class="form-label">Profesional</label>
                 <select id="filtro-doctor" name="doctor_id" class="form-select">
                     <option value="">Todos</option>
@@ -39,7 +55,16 @@
                 </select>
             </div>
         @endunless
-        <div class="col-sm-3">
+        <div class="col-sm-6 col-lg-3">
+            <label for="filtro-sucursal" class="form-label">Sucursal</label>
+            <select id="filtro-sucursal" name="sucursal_id" class="form-select">
+                <option value="">Todas</option>
+                @foreach ($sucursales as $sucursal)
+                    <option value="{{ $sucursal->id }}" @selected($filtroSucursal == $sucursal->id)>{{ $sucursal->nombre }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-sm-6 col-lg-2">
             <label for="filtro-box" class="form-label">Box</label>
             <select id="filtro-box" name="box_id" class="form-select">
                 <option value="">Todos</option>
@@ -48,13 +73,23 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-sm-2">
+        <div class="col-sm-12 col-lg-2">
             <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel"></i> Filtrar</button>
         </div>
     </form>
 
+    @foreach ($bloqueos as $bloqueo)
+        <div class="alert alert-warning align-items-center">
+            <i class="bi bi-calendar-x"></i>
+            <span><strong>{{ $bloqueo->alcance }}</strong> · bloqueado {{ $bloqueo->periodo }} · {{ $bloqueo->motivo }}</span>
+        </div>
+    @endforeach
+
     <div class="row g-3">
         <div class="col-xl-8">
+            @if ($vista === 'semana')
+                @include('citas.semana')
+            @else
             <div class="panel agenda-contenedor">
                 <div class="agenda" id="agenda"
                      style="grid-template-columns: 56px repeat({{ max($boxes->count(), 1) }}, minmax(140px, 1fr)); grid-template-rows: auto repeat({{ count($franjas) }}, 22px);">
@@ -74,7 +109,7 @@
                         @endforeach
                     @endforeach
 
-                    @foreach ($citas->where('estado', '!=', 'cancelada') as $cita)
+                    @foreach ($citas->whereNotIn('estado', \App\Models\Cita::ESTADOS_LIBERAN_HORARIO) as $cita)
                         @php
                             $columna = $boxes->search(fn ($b) => $b->id === $cita->box_id);
                             $fila = $indiceFranja[$cita->hora_inicio->format('H:i')] ?? null;
@@ -91,6 +126,7 @@
                     <p class="text-body-secondary mt-2 mb-0">No hay box habilitados.</p>
                 @endif
             </div>
+            @endif
         </div>
 
         <div class="col-xl-4">
@@ -165,6 +201,7 @@
         </div>
     </div>
 
+    @if ($vista === 'dia')
     <div class="panel mt-3 tabla-contenedor">
         <h2><i class="bi bi-list-check"></i> Citas del día</h2>
         <table class="table align-middle mb-0">
@@ -176,9 +213,17 @@
                     <td><a href="{{ route('pacientes.show', $cita->paciente) }}">{{ $cita->paciente->nombre }}</a></td>
                     <td>{{ $cita->doctor->nombre }}</td>
                     <td>{{ $cita->box->nombre }}</td>
-                    <td>@include('partials.estado-cita', ['estado' => $cita->estado])</td>
+                    <td>
+                        @include('partials.estado-cita', ['estado' => $cita->estado])
+                        @if (\App\Services\CitaService::pendienteDeCierre($cita))
+                            <span class="badge bg-warning-subtle text-warning-emphasis"><i class="bi bi-hourglass-bottom"></i> Pendiente de cierre</span>
+                        @endif
+                    </td>
                     <td class="text-end text-nowrap">
                         @can('modificar', $cita)
+                            @if (\App\Services\CitaService::pendienteDeCierre($cita))
+                                @include('citas.boton-estado', ['estado' => 'no_asistio', 'texto' => 'No asistió', 'clase' => 'btn-outline-secondary', 'icono' => 'bi-person-x'])
+                            @endif
                             @if (in_array($cita->estado, ['agendada', 'reagendada']))
                                 @include('citas.boton-estado', ['estado' => 'confirmada', 'texto' => 'Confirmar', 'clase' => 'btn-outline-primary', 'icono' => 'bi-telephone-check'])
                             @endif
@@ -196,6 +241,7 @@
             </tbody>
         </table>
     </div>
+    @endif
 @endsection
 
 @push('scripts')

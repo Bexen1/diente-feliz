@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" class="claro">
 <head>
     @include('partials.head')
     <title>{{ $reporte['titulo'] }} · Diente Feliz</title>
