@@ -10,7 +10,13 @@ class Usuario extends Authenticatable
 {
     protected $table = 'usuarios';
 
-    protected $fillable = ['nombre', 'email', 'password', 'rol_id', 'activo', 'debe_cambiar_password'];
+    public const TEMAS = [
+        'auto' => ['Tema automático', 'bi-circle-half', 'oscuro'],
+        'oscuro' => ['Tema oscuro', 'bi-moon-stars', 'claro'],
+        'claro' => ['Tema claro', 'bi-sun', 'auto'],
+    ];
+
+    protected $fillable = ['nombre', 'email', 'password', 'rol_id', 'activo', 'debe_cambiar_password', 'tema'];
 
     protected $hidden = ['password'];
 

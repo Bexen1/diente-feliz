@@ -1,5 +1,10 @@
 <!doctype html>
-<html lang="es">
+@php
+    $usuario = auth()->user();
+    $tema = array_key_exists($usuario->tema, \App\Models\Usuario::TEMAS) ? $usuario->tema : 'auto';
+    [$temaNombre, $temaIcono, $temaSiguiente] = \App\Models\Usuario::TEMAS[$tema];
+@endphp
+<html lang="es"@if ($tema !== 'auto') class="{{ $tema }}"@endif>
 <head>
     @include('partials.head')
     <title>@yield('titulo') · Diente Feliz</title>
@@ -7,7 +12,6 @@
 </head>
 <body>
 @php
-    $usuario = auth()->user();
     $menu = [
         ['inicio', 'Inicio', 'bi-house-door', []],
         ['citas.index', 'Agenda', 'bi-calendar3', []],
@@ -71,6 +75,12 @@
             </div>
             <div class="usuario-acciones">
                 <a href="{{ route('perfil.edit') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-person"></i> Perfil</a>
+                <form method="POST" action="{{ route('perfil.tema') }}">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="tema" value="{{ $temaSiguiente }}">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary boton-tema" aria-label="{{ $temaNombre }}" title="{{ $temaNombre }}"><i class="bi {{ $temaIcono }}"></i></button>
+                </form>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-box-arrow-right"></i> Salir</button>

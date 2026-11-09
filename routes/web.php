@@ -36,6 +36,7 @@ Route::middleware(['auth', 'rol'])->group(function () {
 
     Route::get('/perfil', [PerfilController::class, 'edit'])->name('perfil.edit');
     Route::put('/perfil', [PerfilController::class, 'update'])->name('perfil.update');
+    Route::put('/perfil/tema', [PerfilController::class, 'tema'])->name('perfil.tema');
 
     Route::get('/agenda', [CitaController::class, 'index'])->name('citas.index');
     Route::post('/citas', [CitaController::class, 'store'])->name('citas.store');

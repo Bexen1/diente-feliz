@@ -21,7 +21,7 @@ class VerificarRol
             return redirect()->route('login')->withErrors(['email' => 'Su cuenta está desactivada.']);
         }
 
-        if ($usuario->debe_cambiar_password && ! $request->routeIs('perfil.edit', 'perfil.update', 'logout')) {
+        if ($usuario->debe_cambiar_password && ! $request->routeIs('perfil.edit', 'perfil.update', 'perfil.tema', 'logout')) {
             return redirect()->route('perfil.edit')->with('error', 'Debe cambiar su contraseña antes de continuar.');
         }
 
