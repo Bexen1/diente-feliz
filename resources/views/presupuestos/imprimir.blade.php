@@ -17,8 +17,9 @@
     $pagado = (float) $presupuesto->pagos->where('estado', 'vigente')->sum('monto');
 @endphp
 <main class="hoja px-3">
-    <div class="no-imprimir mb-3">
+    <div class="no-imprimir mb-3 d-flex gap-2">
         <a href="{{ route('presupuestos.show', $presupuesto) }}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i> Volver</a>
+        <a href="{{ route('presupuestos.pdf', $presupuesto) }}" class="btn btn-sm btn-primary"><i class="bi bi-file-earmark-pdf"></i> Descargar PDF</a>
     </div>
 
     <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">

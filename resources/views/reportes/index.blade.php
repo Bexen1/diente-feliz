@@ -9,7 +9,8 @@
         <h1>Reportes</h1>
         <div class="d-flex gap-2">
             <a href="{{ route('reportes.index', $parametros + ['formato' => 'csv']) }}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar a Excel</a>
-            <a href="{{ route('reportes.index', $parametros + ['formato' => 'imprimir']) }}" class="btn btn-outline-primary" target="_blank" rel="noopener"><i class="bi bi-printer"></i> Imprimir / PDF</a>
+            <a href="{{ route('reportes.index', $parametros + ['formato' => 'pdf']) }}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Descargar PDF</a>
+            <a href="{{ route('reportes.index', $parametros + ['formato' => 'imprimir']) }}" class="btn btn-outline-primary" target="_blank" rel="noopener"><i class="bi bi-printer"></i> Imprimir</a>
         </div>
     </div>
 

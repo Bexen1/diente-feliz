@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Bloqueo;
 use App\Models\Box;
 use App\Models\Cita;
+use App\Models\Paciente;
 use App\Models\Sucursal;
 use App\Models\Usuario;
 use Carbon\Carbon;
@@ -33,7 +34,7 @@ class AgendaAvanzadaTest extends TestCase
     private function agendar(array $datos)
     {
         return $this->actingAs($this->usuario('valentina'))->post('/citas', array_merge([
-            'paciente_id' => 2, 'doctor_id' => 1, 'box_id' => 1, 'fecha' => $this->dia, 'hora' => '15:00', 'duracion' => 30,
+            'rut' => Paciente::find(2)->rut, 'doctor_id' => 1, 'box_id' => 1, 'fecha' => $this->dia, 'hora' => '15:00', 'duracion' => 30,
         ], $datos));
     }
 

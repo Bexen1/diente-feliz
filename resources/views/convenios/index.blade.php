@@ -5,7 +5,7 @@
 @section('contenido')
     <div class="titulo-pagina">
         <h1>Convenios</h1>
-        @if (auth()->user()->esAdministrador())
+        @if (auth()->user()->puede('mantenedores.gestionar'))
             <a href="{{ route('convenios.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nuevo convenio</a>
         @endif
     </div>
@@ -22,7 +22,7 @@
                     <td class="text-end mono">{{ rtrim(rtrim($convenio->porcentaje_descuento, '0'), '.') }} %</td>
                     <td class="text-end">{{ $convenio->pacientes_count }}</td>
                     <td class="text-end text-nowrap">
-                        @if (auth()->user()->esAdministrador())
+                        @if (auth()->user()->puede('mantenedores.gestionar'))
                             <a href="{{ route('convenios.edit', $convenio) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
                             <a href="{{ route('convenios.eliminar', $convenio) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i> Eliminar</a>
                         @endif

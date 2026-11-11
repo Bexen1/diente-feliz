@@ -16,8 +16,11 @@ class AlertaService
             'pendientesCierre' => $this->pendientesDeCierre($usuario),
         ];
 
-        if ($usuario->tieneRol('Recepcionista')) {
+        if ($usuario->veTodaLaAgenda()) {
             $alertas['sinConfirmar'] = $this->citasSinConfirmarManana();
+        }
+
+        if ($usuario->puede('pagos.registrar')) {
             $alertas['saldosPendientes'] = $this->presupuestosConSaldo();
         }
 
@@ -31,7 +34,7 @@ class AlertaService
             ->whereNotIn('estado', Cita::ESTADOS_LIBERAN_HORARIO)
             ->orderBy('hora_inicio');
 
-        if ($usuario->esDentista()) {
+        if (! $usuario->veTodaLaAgenda()) {
             $consulta->where('doctor_id', $usuario->doctor?->id);
         }
 
@@ -45,7 +48,7 @@ class AlertaService
             ->where('hora_inicio', '<=', now()->subMinutes(CitaService::TOLERANCIA_MINUTOS))
             ->orderBy('hora_inicio');
 
-        if ($usuario->esDentista()) {
+        if (! $usuario->veTodaLaAgenda()) {
             $consulta->where('doctor_id', $usuario->doctor?->id);
         }
 

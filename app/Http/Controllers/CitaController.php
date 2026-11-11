@@ -26,7 +26,8 @@ class CitaController extends Controller
 
         $vista = $request->validated('vista') ?? 'dia';
 
-        $doctorId = $usuario->esDentista() ? $usuario->doctor?->id : $request->validated('doctor_id');
+        $soloPropia = ! $usuario->veTodaLaAgenda();
+        $doctorId = $soloPropia ? $usuario->doctor?->id : $request->validated('doctor_id');
         $boxId = $request->validated('box_id');
         $sucursalId = $request->validated('sucursal_id');
 
@@ -45,7 +46,7 @@ class CitaController extends Controller
 
         $citas = Cita::with(['paciente', 'doctor.usuario', 'box'])
             ->whereBetween('hora_inicio', [$desde, $hasta])
-            ->when($doctorId, fn ($q) => $q->where('doctor_id', $doctorId))
+            ->when($soloPropia || $doctorId, fn ($q) => $q->where('doctor_id', $doctorId))
             ->when($boxId, fn ($q) => $q->where('box_id', $boxId))
             ->when($sucursalId, fn ($q) => $q->whereHas('box', fn ($b) => $b->where('sucursal_id', $sucursalId)))
             ->orderBy('hora_inicio')
@@ -73,6 +74,7 @@ class CitaController extends Controller
                 ->orderBy('nombre')->get(),
             'pacientes' => Paciente::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'rut']),
             'filtroDoctor' => $doctorId,
+            'soloPropia' => $soloPropia,
             'filtroBox' => $boxId,
             'filtroSucursal' => $sucursalId,
             'franjas' => $this->franjas(),
@@ -83,7 +85,7 @@ class CitaController extends Controller
     {
         Gate::authorize('agendarPara', [Cita::class, (int) $request->validated('doctor_id')]);
 
-        $cita = $this->citas->agendar($request->validated());
+        $cita = $this->citas->agendar($request->datos());
 
         return redirect()->route('citas.index', ['fecha' => $cita->hora_inicio->toDateString()])
             ->with('exito', 'Cita agendada para '.$cita->paciente->nombre.' a las '.$cita->hora_inicio->format('H:i').'.');
@@ -106,7 +108,7 @@ class CitaController extends Controller
         Gate::authorize('modificar', $cita);
         Gate::authorize('agendarPara', [Cita::class, (int) $request->validated('doctor_id')]);
 
-        $this->citas->reagendar($cita, $request->validated());
+        $this->citas->reagendar($cita, $request->datos());
 
         return redirect()->route('citas.index', ['fecha' => $cita->hora_inicio->toDateString()])
             ->with('exito', 'Cita reagendada.');

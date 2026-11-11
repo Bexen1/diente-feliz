@@ -27,13 +27,14 @@ class OdontogramaService
 
     public const CARAS = ['vestibular', 'lingual', 'mesial', 'distal', 'oclusal'];
 
-    public function historial(FichaClinica $ficha, ?int $pieza = null, int $limite = 15): Collection
+    public function historial(FichaClinica $ficha, ?int $pieza = null, int $limite = 15, ?string $dia = null): Collection
     {
         return AuditoriaLog::with('usuario')
             ->where('tabla_afectada', 'fichas_clinicas')
             ->where('registro_id', $ficha->id)
             ->where('accion', 'actualizar_odontograma')
             ->when($pieza, fn ($q) => $q->whereRaw("jsonb_exists(payload_cambios_json->'despues', ?)", [(string) $pieza]))
+            ->when($dia, fn ($q) => $q->whereDate('created_at', $dia))
             ->orderByDesc('id')
             ->limit($limite)
             ->get()

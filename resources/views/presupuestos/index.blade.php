@@ -3,7 +3,7 @@
 @section('titulo', 'Presupuestos')
 
 @section('contenido')
-    @php($verPagos = auth()->user()->tieneRol('Recepcionista'))
+    @php($verPagos = auth()->user()->puede('pagos.registrar'))
 
     <div class="titulo-pagina">
         <h1>Presupuestos y pagos</h1>

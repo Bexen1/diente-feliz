@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Paciente;
 use App\Services\AuditoriaService;
 use App\Services\ExportacionFichaService;
+use App\Services\PdfService;
 
 class ExportacionFichaController extends Controller
 {
@@ -16,6 +17,14 @@ class ExportacionFichaController extends Controller
         AuditoriaService::registrar('exportar', 'pacientes', $paciente->id, null, ['formato' => 'imprimible']);
 
         return view('fichas.exportar', ['paciente' => $paciente, 'datos' => $datos]);
+    }
+
+    public function pdf(Paciente $paciente)
+    {
+        $datos = $this->exportacion->datos($paciente);
+        AuditoriaService::registrar('exportar', 'pacientes', $paciente->id, null, ['formato' => 'pdf']);
+
+        return app(PdfService::class)->descargar('pdf.ficha', ['datos' => $datos], 'ficha-'.$paciente->rut.'-'.now()->format('Ymd').'.pdf');
     }
 
     public function descargar(Paciente $paciente)

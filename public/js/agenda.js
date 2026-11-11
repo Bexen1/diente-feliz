@@ -15,7 +15,7 @@
         });
         celda.classList.add('seleccionada');
 
-        var paciente = formulario.querySelector('#paciente_id');
+        var paciente = formulario.querySelector('#rut');
         paciente.focus();
         formulario.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });

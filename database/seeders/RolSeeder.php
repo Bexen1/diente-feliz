@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Permiso;
 use App\Models\Rol;
 use Illuminate\Database\Seeder;
 
@@ -18,5 +19,8 @@ class RolSeeder extends Seeder
         foreach ($roles as $nombre => $descripcion) {
             Rol::create(['nombre' => $nombre, 'descripcion' => $descripcion]);
         }
+
+        Permiso::sincronizarCatalogo();
+        Permiso::asignarPredeterminados();
     }
 }

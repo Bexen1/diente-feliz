@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Rol extends Model
 {
@@ -12,23 +14,6 @@ class Rol extends Model
     public const DENTISTA = 'Dentista';
 
     public const RECEPCIONISTA = 'Recepcionista';
-
-    public const MATRIZ_PERMISOS = [
-        'Usuarios, roles y doctores' => ['Total', '—', '—'],
-        'Sucursales, box y convenios' => ['Total', 'Lectura', 'Lectura'],
-        'Tratamientos y bloqueos de agenda' => ['Total', '—', '—'],
-        'Pacientes (datos de contacto)' => ['Total', 'Crear y editar', 'Crear y editar'],
-        'Antecedentes de salud' => ['Total', 'Crear y editar', '—'],
-        'Ficha clínica, odontograma y radiografías' => ['Total', 'Total', '—'],
-        'Exportar ficha del paciente' => ['Sí', 'Sí', '—'],
-        'Agenda (ver)' => ['Todos los profesionales', 'Solo la propia', 'Todos los profesionales'],
-        'Citas (agendar, reagendar, cancelar, inasistencia)' => ['Sí', 'Solo en su agenda', 'Sí'],
-        'Presupuestos' => ['Total', 'Lectura', 'Crear y editar'],
-        'Plan de tratamiento (registrar realizado)' => ['Sí', 'Sí', 'Lectura'],
-        'Pagos y comprobantes' => ['Total, incluye anular', '—', 'Registrar y consultar'],
-        'Dashboard y reportes' => ['Sí', '—', '—'],
-        'Registro de auditoría' => ['Solo lectura', '—', '—'],
-    ];
 
     protected $table = 'roles';
 
@@ -39,8 +24,18 @@ class Rol extends Model
         return $this->hasMany(Usuario::class, 'rol_id');
     }
 
-    public static function columnaMatriz(string $nombre): int
+    public function permisos(): BelongsToMany
     {
-        return array_search($nombre, [self::ADMINISTRADOR, self::DENTISTA, self::RECEPCIONISTA], true);
+        return $this->belongsToMany(Permiso::class, 'permiso_rol', 'rol_id', 'permiso_id');
+    }
+
+    public function clavesPermisos(): Collection
+    {
+        return $this->permisos->pluck('clave');
+    }
+
+    public function esAdministrador(): bool
+    {
+        return $this->nombre === self::ADMINISTRADOR;
     }
 }

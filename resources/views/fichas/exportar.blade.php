@@ -17,6 +17,7 @@
 <main class="hoja px-3">
     <div class="no-imprimir mb-3 d-flex gap-2">
         <a href="{{ route('fichas.show', $paciente) }}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i> Volver</a>
+        <a href="{{ route('fichas.exportar.pdf', $paciente) }}" class="btn btn-sm btn-primary"><i class="bi bi-file-earmark-pdf"></i> Descargar PDF</a>
         <a href="{{ route('fichas.exportar.json', $paciente) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-filetype-json"></i> Descargar JSON</a>
     </div>
 

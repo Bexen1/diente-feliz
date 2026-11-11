@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ReporteRequest;
 use App\Services\AuditoriaService;
+use App\Services\PdfService;
 use App\Services\ReporteService;
 use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -25,8 +26,15 @@ class ReporteController extends Controller
             ]);
         }
 
+        $archivo = "reporte-{$tipo}-{$desde->format('Ymd')}-{$hasta->format('Ymd')}";
+
         if ($formato === 'csv') {
-            return $this->csv($reporte, "reporte-{$tipo}-{$desde->format('Ymd')}-{$hasta->format('Ymd')}.csv");
+            return $this->csv($reporte, $archivo.'.csv');
+        }
+
+        if ($formato === 'pdf') {
+            return app(PdfService::class)->descargar('pdf.reporte', ['reporte' => $reporte, 'desde' => $desde, 'hasta' => $hasta],
+                $archivo.'.pdf', count($reporte['columnas']) > 6 ? 'landscape' : 'portrait');
         }
 
         return view($formato === 'imprimir' ? 'reportes.imprimir' : 'reportes.index', [

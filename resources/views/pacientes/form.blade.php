@@ -3,7 +3,7 @@
 @section('titulo', $paciente->exists ? 'Editar paciente' : 'Nuevo paciente')
 
 @section('contenido')
-    @php($verSalud = auth()->user()->tieneRol('Dentista'))
+    @php($verSalud = auth()->user()->puede('pacientes.salud'))
 
     <div class="titulo-pagina">
         <h1>{{ $paciente->exists ? 'Editar paciente' : 'Nuevo paciente' }}</h1>

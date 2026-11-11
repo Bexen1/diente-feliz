@@ -3,7 +3,7 @@
 @section('titulo', 'Reagendar cita')
 
 @section('contenido')
-    @php($esDentista = auth()->user()->esDentista())
+    @php($soloPropia = ! auth()->user()->veTodaLaAgenda())
 
     <div class="titulo-pagina">
         <div>
@@ -23,7 +23,7 @@
 
         <div class="mb-3">
             <label for="doctor_id" class="form-label">Dentista</label>
-            @if ($esDentista)
+            @if ($soloPropia)
                 <input type="hidden" name="doctor_id" value="{{ $cita->doctor_id }}">
                 <input type="text" id="doctor_id" class="form-control" value="{{ $cita->doctor->nombre }}" disabled>
             @else

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AuditoriaLog;
 use App\Models\Cita;
+use App\Models\Paciente;
 use App\Models\Usuario;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,7 +32,7 @@ class AgendaTest extends TestCase
     private function agendar(array $datos, string $quien = 'valentina')
     {
         return $this->actingAs($this->usuario($quien))->post('/citas', array_merge([
-            'paciente_id' => 2, 'doctor_id' => 1, 'box_id' => 2,
+            'rut' => Paciente::find(2)->rut, 'doctor_id' => 1, 'box_id' => 2,
             'fecha' => $this->dia, 'hora' => '12:00', 'duracion' => 30,
         ], $datos));
     }
@@ -68,7 +69,7 @@ class AgendaTest extends TestCase
 
     public function test_cita_contigua_se_acepta(): void
     {
-        $this->agendar(['doctor_id' => 1, 'box_id' => 1, 'hora' => '09:45', 'duracion' => 30, 'paciente_id' => 3])
+        $this->agendar(['doctor_id' => 1, 'box_id' => 1, 'hora' => '09:45', 'duracion' => 30, 'rut' => Paciente::find(3)->rut])
             ->assertSessionHasErrors('hora');
 
         $this->agendar(['doctor_id' => 1, 'box_id' => 1, 'hora' => '10:30', 'duracion' => 30])

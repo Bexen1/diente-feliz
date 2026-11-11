@@ -5,7 +5,7 @@
 @section('contenido')
     <div class="titulo-pagina">
         <h1>Box de atención</h1>
-        @if (auth()->user()->esAdministrador())
+        @if (auth()->user()->puede('mantenedores.gestionar'))
             <a href="{{ route('box.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nuevo box</a>
         @endif
     </div>
@@ -22,7 +22,7 @@
                     <td>{{ $box->sucursal->nombre }}</td>
                     <td>@include('partials.estado-activo', ['activo' => $box->activo])</td>
                     <td class="text-end">
-                        @if (auth()->user()->esAdministrador())
+                        @if (auth()->user()->puede('mantenedores.gestionar'))
                             <a href="{{ route('box.edit', $box) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
                         @endif
                     </td>

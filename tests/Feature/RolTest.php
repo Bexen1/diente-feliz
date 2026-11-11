@@ -24,8 +24,9 @@ class RolTest extends TestCase
         $this->actingAs($this->usuario('admin'))->get('/roles')
             ->assertOk()
             ->assertSee('Matriz de permisos')
-            ->assertSee('Antecedentes de salud')
-            ->assertSee('Solo la propia')
+            ->assertSee('Ver y editar antecedentes de salud')
+            ->assertSee('Ver y gestionar la agenda de todos los profesionales')
+            ->assertSee('name="permisos[2][]" value="fichas.gestionar"', false)
             ->assertSee('Atiende la recepción');
     }
 

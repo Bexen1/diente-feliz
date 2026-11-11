@@ -7,6 +7,7 @@ use App\Models\Box;
 use App\Models\Cita;
 use App\Models\Convenio;
 use App\Models\Doctor;
+use App\Models\Evolucion;
 use App\Models\FichaClinica;
 use App\Models\Paciente;
 use App\Models\Presupuesto;
@@ -253,9 +254,38 @@ class DemoSeeder extends Seeder
 
                 return $linea;
             }, $calculo['lineas']);
-            $presupuesto->detalles()->createMany($lineas);
+            $detalles = $presupuesto->detalles()->createMany($lineas);
+            $this->crearSesiones($presupuesto, $detalles, $creado, $hoy);
 
             $this->crearPagos($presupuesto, $estado, (float) $calculo['total'], $creado, $hoy);
+        }
+    }
+
+    private function crearSesiones(Presupuesto $presupuesto, $detalles, Carbon $creado, Carbon $hoy): void
+    {
+        $fichaId = FichaClinica::where('paciente_id', $presupuesto->paciente_id)->value('id');
+        if (! $fichaId) {
+            return;
+        }
+
+        $fecha = $creado->copy();
+        foreach ($detalles as $detalle) {
+            for ($n = 1; $n <= $detalle->cantidad_realizada; $n++) {
+                $fecha = $fecha->copy()->addDays(mt_rand(3, 10));
+                if ($fecha->greaterThan($hoy)) {
+                    $fecha = $hoy->copy();
+                }
+                $nombre = $detalle->tratamiento()->value('nombre');
+
+                Evolucion::create([
+                    'ficha_id' => $fichaId,
+                    'doctor_id' => $presupuesto->doctor_id,
+                    'detalle_presupuesto_id' => $detalle->id,
+                    'fecha' => $fecha->toDateString(),
+                    'diagnostico' => 'Plan de tratamiento del presupuesto N.° '.$presupuesto->id,
+                    'tratamiento_realizado' => $nombre.' ('.$n.' de '.$detalle->cantidad.')',
+                ]);
+            }
         }
     }
 

@@ -5,7 +5,8 @@
 @section('contenido')
     @php
         $usuario = auth()->user();
-        $gestiona = $usuario->tieneRol('Recepcionista');
+        $gestiona = $usuario->puede('presupuestos.gestionar');
+        $cobra = $usuario->puede('pagos.registrar');
         $subtotal = $presupuesto->subtotal();
         $descuento = $presupuesto->descuento();
         $saldo = $presupuesto->saldoPendiente();
@@ -22,6 +23,7 @@
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a href="{{ route('presupuestos.imprimir', $presupuesto) }}" class="btn btn-outline-primary" target="_blank" rel="noopener"><i class="bi bi-printer"></i> Imprimir orden</a>
+            <a href="{{ route('presupuestos.pdf', $presupuesto) }}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
             @if ($gestiona && $presupuesto->estado === 'borrador')
                 <a href="{{ route('presupuestos.edit', $presupuesto) }}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
                 <form method="POST" action="{{ route('presupuestos.aceptar', $presupuesto) }}">
@@ -73,7 +75,7 @@
             </div>
         </div>
 
-        @if ($gestiona)
+        @if ($cobra)
             <div class="col-lg-5">
                 <div class="panel mb-3">
                     <h2><i class="bi bi-cash-stack"></i> Pagos registrados</h2>
@@ -89,9 +91,10 @@
                                 <td class="text-end mono">@pesos($pago->monto)</td>
                                 <td class="text-end text-nowrap">
                                     <a href="{{ route('pagos.comprobante', $pago) }}" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener" aria-label="Comprobante del pago"><i class="bi bi-receipt-cutoff"></i></a>
+                                    <a href="{{ route('pagos.comprobante.pdf', $pago) }}" class="btn btn-sm btn-outline-primary" aria-label="Comprobante en PDF"><i class="bi bi-file-earmark-pdf"></i></a>
                                     @if ($pago->estado === 'anulado')
                                         <span class="badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-slash-circle"></i> Anulado</span>
-                                    @elseif ($usuario->esAdministrador())
+                                    @elseif ($usuario->puede('pagos.anular'))
                                         <a href="{{ route('pagos.anular.confirmar', $pago) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle"></i> Anular</a>
                                     @endif
                                 </td>

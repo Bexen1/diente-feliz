@@ -5,7 +5,7 @@
 @section('contenido')
     <div class="titulo-pagina">
         <h1>Sucursales</h1>
-        @if (auth()->user()->esAdministrador())
+        @if (auth()->user()->puede('mantenedores.gestionar'))
             <a href="{{ route('sucursales.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nueva sucursal</a>
         @endif
     </div>
@@ -22,7 +22,7 @@
                     <td>{{ $sucursal->direccion }}</td>
                     <td>{{ $sucursal->boxes_count }}</td>
                     <td class="text-end text-nowrap">
-                        @if (auth()->user()->esAdministrador())
+                        @if (auth()->user()->puede('mantenedores.gestionar'))
                             <a href="{{ route('sucursales.edit', $sucursal) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
                             <a href="{{ route('sucursales.eliminar', $sucursal) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i> Eliminar</a>
                         @endif

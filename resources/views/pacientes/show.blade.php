@@ -16,11 +16,14 @@
             @endif
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            @if ($usuario->tieneRol('Dentista') && Route::has('fichas.show'))
+            @if ($usuario->puede('fichas.gestionar'))
                 <a href="{{ route('fichas.show', $paciente) }}" class="btn btn-primary"><i class="bi bi-clipboard2-pulse"></i> Ficha clínica</a>
             @endif
-            @if ($usuario->tieneRol('Recepcionista') && Route::has('presupuestos.create'))
+            @if ($usuario->puede('presupuestos.gestionar'))
                 <a href="{{ route('presupuestos.create', ['paciente_id' => $paciente->id]) }}" class="btn btn-outline-primary"><i class="bi bi-receipt"></i> Nuevo presupuesto</a>
+            @endif
+            @if ($paciente->activo)
+                <a href="{{ route('citas.index', ['rut' => $paciente->rut]) }}#form-cita" class="btn btn-outline-primary"><i class="bi bi-calendar-plus"></i> Agendar cita</a>
             @endif
             <a href="{{ route('pacientes.edit', $paciente) }}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
         </div>
@@ -49,7 +52,7 @@
         <div class="col-lg-6">
             <div class="panel h-100">
                 <h2><i class="bi bi-heart-pulse"></i> Antecedentes de salud</h2>
-                @if ($usuario->tieneRol('Dentista'))
+                @if ($usuario->puede('pacientes.salud'))
                     <dl class="row mb-0">
                         <dt class="col-sm-4">Alergias</dt><dd class="col-sm-8">{{ $paciente->alergias ?: 'Sin registro' }}</dd>
                         <dt class="col-sm-4">Patologías base</dt><dd class="col-sm-8">{{ $paciente->patologias ?: 'Sin registro' }}</dd>
@@ -82,7 +85,7 @@
             </div>
         </div>
 
-        @if ($usuario->tieneRol('Dentista', 'Recepcionista'))
+        @if ($usuario->puede('presupuestos.ver', 'presupuestos.gestionar', 'pagos.registrar'))
             <div class="col-lg-5">
                 <div class="panel tabla-contenedor">
                     <h2><i class="bi bi-receipt"></i> Presupuestos</h2>

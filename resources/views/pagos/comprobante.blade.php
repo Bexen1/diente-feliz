@@ -15,8 +15,9 @@
 <body>
 @php($presupuesto = $pago->presupuesto)
 <main class="hoja px-3">
-    <div class="no-imprimir mb-3">
+    <div class="no-imprimir mb-3 d-flex gap-2">
         <a href="{{ route('presupuestos.show', $presupuesto) }}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i> Volver</a>
+        <a href="{{ route('pagos.comprobante.pdf', $pago) }}" class="btn btn-sm btn-primary"><i class="bi bi-file-earmark-pdf"></i> Descargar PDF</a>
     </div>
 
     <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CabecerasSeguridad;
+use App\Http\Middleware\VerificarPermiso;
 use App\Http\Middleware\VerificarRol;
 use App\Services\AuditoriaService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -17,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias(['rol' => VerificarRol::class]);
+        $middleware->alias(['rol' => VerificarRol::class, 'permiso' => VerificarPermiso::class]);
         $middleware->web(append: [CabecerasSeguridad::class]);
 
         $middleware->redirectGuestsTo(fn () => route('login'));

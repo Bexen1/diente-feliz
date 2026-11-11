@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\Cita;
+use App\Models\Paciente;
+use App\Rules\Rut;
 use App\Services\CitaService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -25,14 +27,40 @@ class CitaRequest extends FormRequest
         ];
 
         if ($this->isMethod('post')) {
-            $reglas['paciente_id'] = ['required', 'integer', Rule::exists('pacientes', 'id')->where('activo', true)];
+            $reglas['rut'] = ['required', 'string', new Rut, Rule::exists('pacientes', 'rut')->where('activo', true)];
         }
 
         return $reglas;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('rut')) {
+            $this->merge(['rut' => Rut::normalizar($this->input('rut'))]);
+        }
+    }
+
+    public function datos(): array
+    {
+        $datos = $this->safe()->except('rut');
+
+        if ($this->isMethod('post')) {
+            $datos['paciente_id'] = Paciente::where('rut', $this->validated('rut'))->value('id');
+        }
+
+        return $datos;
+    }
+
     public function messages(): array
     {
-        return ['duracion.in' => 'La duración debe ser de 30, 45 o 60 minutos.'];
+        return [
+            'duracion.in' => 'La duración debe ser de 30, 45 o 60 minutos.',
+            'rut.exists' => 'No hay un paciente activo con ese RUT.',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return ['rut' => 'RUT del paciente'];
     }
 }

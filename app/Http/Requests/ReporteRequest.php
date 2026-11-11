@@ -19,7 +19,7 @@ class ReporteRequest extends FormRequest
             'tipo' => ['nullable', Rule::in(array_keys(ReporteService::TIPOS))],
             'desde' => ['nullable', 'date_format:Y-m-d'],
             'hasta' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:desde'],
-            'formato' => ['nullable', Rule::in(['pantalla', 'imprimir', 'csv'])],
+            'formato' => ['nullable', Rule::in(['pantalla', 'imprimir', 'csv', 'pdf'])],
         ];
     }
 }

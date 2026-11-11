@@ -6,6 +6,7 @@ use App\Http\Requests\ConfirmacionRequest;
 use App\Http\Requests\PagoRequest;
 use App\Models\Pago;
 use App\Models\Presupuesto;
+use App\Services\PdfService;
 use App\Services\PresupuestoService;
 
 class PagoController extends Controller
@@ -30,6 +31,14 @@ class PagoController extends Controller
             'pago' => $pago,
             'saldo' => $pago->presupuesto->saldoPendiente(),
         ]);
+    }
+
+    public function comprobantePdf(Pago $pago)
+    {
+        $pago->load(['presupuesto.paciente.convenio', 'presupuesto.doctor.usuario']);
+
+        return app(PdfService::class)->descargar('pdf.comprobante', ['pago' => $pago, 'saldo' => $pago->presupuesto->saldoPendiente()],
+            'comprobante-'.str_pad($pago->id, 6, '0', STR_PAD_LEFT).'.pdf');
     }
 
     public function confirmarAnulacion(Pago $pago)

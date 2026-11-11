@@ -51,6 +51,20 @@ class Usuario extends Authenticatable
         return $nombre === Rol::ADMINISTRADOR || in_array($nombre, $roles, true);
     }
 
+    public function puede(string ...$permisos): bool
+    {
+        if ($this->esAdministrador()) {
+            return true;
+        }
+
+        return $this->rol->clavesPermisos()->intersect($permisos)->isNotEmpty();
+    }
+
+    public function veTodaLaAgenda(): bool
+    {
+        return $this->puede('agenda.todas');
+    }
+
     public function esAdministrador(): bool
     {
         return $this->rol->nombre === Rol::ADMINISTRADOR;

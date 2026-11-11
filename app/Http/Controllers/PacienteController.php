@@ -54,7 +54,7 @@ class PacienteController extends Controller
             'presupuestos' => fn ($q) => $q->orderByDesc('created_at'),
         ]);
 
-        if (auth()->user()->tieneRol('Dentista')) {
+        if (auth()->user()->puede('pacientes.salud')) {
             AuditoriaService::registrar('ver', 'pacientes', $paciente->id);
         }
 

@@ -9,13 +9,12 @@ class CitaPolicy
 {
     public function modificar(Usuario $usuario, Cita $cita): bool
     {
-        return $usuario->tieneRol('Recepcionista')
-            || ($usuario->esDentista() && $cita->doctor_id === $usuario->doctor?->id);
+        return $this->agendarPara($usuario, $cita->doctor_id);
     }
 
     public function agendarPara(Usuario $usuario, int $doctorId): bool
     {
-        return $usuario->tieneRol('Recepcionista')
-            || ($usuario->esDentista() && $doctorId === $usuario->doctor?->id);
+        return $usuario->veTodaLaAgenda()
+            || ($usuario->doctor !== null && $doctorId === $usuario->doctor->id);
     }
 }

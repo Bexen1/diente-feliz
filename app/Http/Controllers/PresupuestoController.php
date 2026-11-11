@@ -9,6 +9,7 @@ use App\Models\Doctor;
 use App\Models\Paciente;
 use App\Models\Presupuesto;
 use App\Models\Tratamiento;
+use App\Services\PdfService;
 use App\Services\PresupuestoService;
 
 class PresupuestoController extends Controller
@@ -114,6 +115,11 @@ class PresupuestoController extends Controller
     public function imprimir(Presupuesto $presupuesto)
     {
         return view('presupuestos.imprimir', ['presupuesto' => $this->cargar($presupuesto)]);
+    }
+
+    public function pdf(Presupuesto $presupuesto)
+    {
+        return app(PdfService::class)->descargar('pdf.presupuesto', ['presupuesto' => $this->cargar($presupuesto)], 'orden-tratamiento-'.$presupuesto->id.'.pdf');
     }
 
     private function cargar(Presupuesto $presupuesto): Presupuesto

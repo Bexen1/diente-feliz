@@ -72,11 +72,13 @@ class ExportacionFichaService
                 'tratamientos' => $p->detalles->map(fn ($d) => [
                     'tratamiento' => $d->tratamiento->nombre,
                     'cantidad' => $d->cantidad,
+                    'realizados' => $d->cantidad_realizada,
                     'subtotal' => (float) $d->subtotal,
                 ])->values()->all(),
                 'pagos' => $p->pagos->map(fn ($pago) => [
                     'fecha' => $pago->fecha->format('Y-m-d'),
                     'monto' => (float) $pago->monto,
+                    'metodo' => $pago->nombre_metodo,
                     'estado' => $pago->estado,
                 ])->values()->all(),
             ])->values()->all(),

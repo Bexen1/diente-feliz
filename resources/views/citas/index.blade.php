@@ -4,7 +4,7 @@
 
 @php
     $usuario = auth()->user();
-    $esDentista = $usuario->esDentista();
+    $soloPropia = ! $usuario->veTodaLaAgenda();
     $paleta = ['#0f766e', '#2563eb', '#c2410c', '#7c3aed', '#be185d', '#15803d'];
     $colorDoctor = $doctores->values()->mapWithKeys(fn ($d, $i) => [$d->id => $paleta[$i % count($paleta)]]);
     $indiceFranja = array_flip($franjas);
@@ -44,7 +44,7 @@
             <label for="filtro-fecha" class="form-label">Día</label>
             <input type="date" id="filtro-fecha" name="fecha" value="{{ $fecha->toDateString() }}" class="form-control">
         </div>
-        @unless ($esDentista)
+        @unless ($soloPropia)
             <div class="col-sm-6 col-lg-3">
                 <label for="filtro-doctor" class="form-label">Profesional</label>
                 <select id="filtro-doctor" name="doctor_id" class="form-select">
@@ -139,18 +139,18 @@
                 @endif
 
                 <div class="mb-2">
-                    <label for="paciente_id" class="form-label">Paciente</label>
-                    <select id="paciente_id" name="paciente_id" class="form-select" required>
-                        <option value="">Seleccione…</option>
+                    <label for="rut" class="form-label">RUT del paciente</label>
+                    <input type="text" id="rut" name="rut" class="form-control mono" list="pacientes-rut" value="{{ old('rut', request('rut')) }}" placeholder="12345678-5" autocomplete="off" required>
+                    <datalist id="pacientes-rut">
                         @foreach ($pacientes as $paciente)
-                            <option value="{{ $paciente->id }}" @selected(old('paciente_id') == $paciente->id)>{{ $paciente->nombre }} · {{ $paciente->rut }}</option>
+                            <option value="{{ $paciente->rut }}">{{ $paciente->nombre }}</option>
                         @endforeach
-                    </select>
+                    </datalist>
                 </div>
 
                 <div class="mb-2">
                     <label for="doctor_id" class="form-label">Dentista</label>
-                    @if ($esDentista)
+                    @if ($soloPropia)
                         <input type="hidden" name="doctor_id" value="{{ $usuario->doctor?->id }}">
                         <input type="text" id="doctor_id" class="form-control" value="{{ $usuario->nombre }}" disabled>
                     @else
@@ -205,12 +205,13 @@
     <div class="panel mt-3 tabla-contenedor">
         <h2><i class="bi bi-list-check"></i> Citas del día</h2>
         <table class="table align-middle mb-0">
-            <thead><tr><th>Hora</th><th>Paciente</th><th>Dentista</th><th>Box</th><th>Estado</th><th></th></tr></thead>
+            <thead><tr><th>Hora</th><th>Paciente</th><th>RUT</th><th>Dentista</th><th>Box</th><th>Estado</th><th></th></tr></thead>
             <tbody>
             @forelse ($citas as $cita)
                 <tr>
                     <td class="mono">{{ $cita->hora_inicio->format('H:i') }}–{{ $cita->hora_fin->format('H:i') }}</td>
                     <td><a href="{{ route('pacientes.show', $cita->paciente) }}">{{ $cita->paciente->nombre }}</a></td>
+                    <td class="mono">{{ $cita->paciente->rut }}</td>
                     <td>{{ $cita->doctor->nombre }}</td>
                     <td>{{ $cita->box->nombre }}</td>
                     <td>
@@ -236,7 +237,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="text-body-secondary">No hay citas para este día.</td></tr>
+                <tr><td colspan="7" class="text-body-secondary">No hay citas para este día.</td></tr>
             @endforelse
             </tbody>
         </table>

@@ -56,6 +56,7 @@ class PlanTratamientoService
             $evolucion = Evolucion::create([
                 'ficha_id' => $presupuesto->paciente->ficha->id,
                 'doctor_id' => $usuario->doctor?->id ?? $presupuesto->doctor_id,
+                'detalle_presupuesto_id' => $detalle->id,
                 'fecha' => today(),
                 'diagnostico' => 'Plan de tratamiento del presupuesto N.° '.$presupuesto->id,
                 'tratamiento_realizado' => $detalle->tratamiento->nombre.' ('.$detalle->cantidad_realizada.' de '.$detalle->cantidad.')',

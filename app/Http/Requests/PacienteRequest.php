@@ -30,7 +30,7 @@ class PacienteRequest extends FormRequest
             'convenio_id' => ['nullable', 'integer', 'exists:convenios,id'],
         ];
 
-        if ($this->user()->tieneRol('Dentista')) {
+        if ($this->user()->puede('pacientes.salud')) {
             foreach (Paciente::CAMPOS_SALUD as $campo) {
                 $reglas[$campo] = ['nullable', 'string', 'max:2000'];
             }

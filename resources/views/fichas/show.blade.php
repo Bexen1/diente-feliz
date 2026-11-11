@@ -14,8 +14,11 @@
                 · {{ $paciente->convenio?->institucion ?? 'Particular' }}</small>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('fichas.exportar', $paciente) }}" class="btn btn-outline-primary" target="_blank" rel="noopener"><i class="bi bi-file-earmark-medical"></i> Exportar ficha</a>
-            <a href="{{ route('fichas.exportar.json', $paciente) }}" class="btn btn-outline-primary"><i class="bi bi-filetype-json"></i> Descargar JSON</a>
+            @if (auth()->user()->puede('fichas.exportar'))
+                <a href="{{ route('fichas.exportar.pdf', $paciente) }}" class="btn btn-primary"><i class="bi bi-file-earmark-pdf"></i> Descargar PDF</a>
+                <a href="{{ route('fichas.exportar', $paciente) }}" class="btn btn-outline-primary" target="_blank" rel="noopener"><i class="bi bi-printer"></i> Imprimir ficha</a>
+                <a href="{{ route('fichas.exportar.json', $paciente) }}" class="btn btn-outline-primary"><i class="bi bi-filetype-json"></i> Descargar JSON</a>
+            @endif
             <a href="{{ route('pacientes.show', $paciente) }}" class="btn btn-outline-primary"><i class="bi bi-person-vcard"></i> Datos del paciente</a>
         </div>
     </div>
@@ -130,15 +133,15 @@
                     <tbody>
                     @foreach ($presupuesto->detalles as $detalle)
                         <tr>
-                            <td>{{ $detalle->tratamiento->nombre }}</td>
+                            <td><a href="{{ route('detalles.show', $detalle) }}">{{ $detalle->tratamiento->nombre }}</a></td>
                             <td class="text-end mono" style="width: 120px;">{{ $detalle->cantidad_realizada }} / {{ $detalle->cantidad }}</td>
                             <td class="text-end" style="width: 190px;">
-                                @if ($detalle->pendientes() > 0)
+                                @if ($detalle->pendientes() > 0 && auth()->user()->puede('plan.registrar'))
                                     <form method="POST" action="{{ route('detalles.realizado', $detalle) }}">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-check2-circle"></i> Registrar realizado</button>
                                     </form>
-                                @else
+                                @elseif ($detalle->pendientes() === 0)
                                     <span class="badge bg-success-subtle text-success-emphasis"><i class="bi bi-check-circle"></i> Completo</span>
                                 @endif
                             </td>
@@ -154,7 +157,7 @@
 
     <div class="panel mb-3 tabla-contenedor" id="historial">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-            <h2 class="mb-0"><i class="bi bi-clock-history"></i> Historial del odontograma</h2>
+            <h2 class="panel-titulo mb-0"><i class="bi bi-clock-history"></i> Historial del odontograma</h2>
             <form method="GET" action="{{ route('fichas.show', $paciente) }}#historial" class="d-flex gap-2">
                 <select name="pieza" class="form-select form-select-sm" aria-label="Filtrar por pieza">
                     <option value="">Todas las piezas</option>
@@ -217,9 +220,10 @@
                 <h2><i class="bi bi-journal-medical"></i> Historial de atenciones</h2>
                 @forelse ($ficha->evoluciones as $evolucion)
                     <div class="border-bottom py-2">
-                        <div class="d-flex justify-content-between flex-wrap">
-                            <strong class="mono">{{ $evolucion->fecha->format('d/m/Y') }}</strong>
-                            <small class="text-body-secondary">{{ $evolucion->doctor->nombre }}</small>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <span><strong class="mono">{{ $evolucion->fecha->format('d/m/Y') }}</strong>
+                                <small class="text-body-secondary">· {{ $evolucion->doctor->nombre }}</small></span>
+                            <a href="{{ route('atenciones.show', $evolucion) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Ver detalle</a>
                         </div>
                         <div><span class="text-body-secondary">Diagnóstico:</span> {{ $evolucion->diagnostico }}</div>
                         @if ($evolucion->tratamiento_realizado)

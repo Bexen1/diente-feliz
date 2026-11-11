@@ -12,25 +12,27 @@
 </head>
 <body>
 @php
-    $menu = [
-        ['inicio', 'Inicio', 'bi-house-door', []],
-        ['citas.index', 'Agenda', 'bi-calendar3', []],
-        ['pacientes.index', 'Pacientes', 'bi-people', []],
-        ['presupuestos.index', 'Presupuestos y pagos', 'bi-receipt', ['Dentista', 'Recepcionista']],
-        ['dashboard', 'Dashboard', 'bi-bar-chart-line', ['Administrador']],
-        ['reportes.index', 'Reportes', 'bi-file-earmark-bar-graph', ['Administrador']],
-    ];
-    $menuAdmin = [
-        ['usuarios.index', 'Usuarios', 'bi-person-gear'],
-        ['roles.index', 'Roles y permisos', 'bi-shield-lock'],
-        ['doctores.index', 'Doctores y horarios', 'bi-person-badge'],
-        ['bloqueos.index', 'Bloqueos de agenda', 'bi-calendar-x'],
-        ['sucursales.index', 'Sucursales', 'bi-building'],
-        ['box.index', 'Box', 'bi-door-open'],
-        ['convenios.index', 'Convenios', 'bi-patch-check'],
-        ['tratamientos.index', 'Tratamientos', 'bi-clipboard2-pulse'],
-        ['auditoria.index', 'Auditoría', 'bi-shield-check'],
-    ];
+    $esAdmin = $usuario->esAdministrador();
+    $mantenedores = $usuario->puede('mantenedores.gestionar');
+    $menu = array_filter([
+        ['inicio', 'Inicio', 'bi-house-door', true],
+        ['citas.index', 'Agenda', 'bi-calendar3', true],
+        ['pacientes.index', 'Pacientes', 'bi-people', true],
+        ['presupuestos.index', 'Presupuestos y pagos', 'bi-receipt', $usuario->puede('presupuestos.ver', 'presupuestos.gestionar', 'pagos.registrar')],
+        ['dashboard', 'Dashboard', 'bi-bar-chart-line', $usuario->puede('dashboard.ver')],
+        ['reportes.index', 'Reportes', 'bi-file-earmark-bar-graph', $usuario->puede('reportes.ver')],
+    ], fn ($opcion) => $opcion[3]);
+    $menuAdmin = array_filter([
+        ['usuarios.index', 'Usuarios', 'bi-person-gear', $esAdmin],
+        ['roles.index', 'Roles y permisos', 'bi-shield-lock', $esAdmin],
+        ['doctores.index', 'Doctores y horarios', 'bi-person-badge', $esAdmin],
+        ['bloqueos.index', 'Bloqueos de agenda', 'bi-calendar-x', $mantenedores],
+        ['sucursales.index', 'Sucursales', 'bi-building', $mantenedores],
+        ['box.index', 'Box', 'bi-door-open', $mantenedores],
+        ['convenios.index', 'Convenios', 'bi-patch-check', $mantenedores],
+        ['tratamientos.index', 'Tratamientos', 'bi-clipboard2-pulse', $mantenedores],
+        ['auditoria.index', 'Auditoría', 'bi-shield-check', $usuario->puede('auditoria.ver')],
+    ], fn ($opcion) => $opcion[3]);
     $palabras = array_values(array_filter(explode(' ', $usuario->nombre), fn ($p) => ! str_ends_with($p, '.')));
     $iniciales = mb_strtoupper(mb_substr($palabras[0] ?? '', 0, 1).mb_substr($palabras[1] ?? '', 0, 1));
 @endphp
@@ -45,15 +47,15 @@
         </a>
 
         <nav class="menu" aria-label="Menú principal">
-            @foreach ($menu as [$ruta, $texto, $icono, $roles])
-                @if (Route::has($ruta) && ($roles === [] || $usuario->tieneRol(...$roles)))
+            @foreach ($menu as [$ruta, $texto, $icono])
+                @if (Route::has($ruta))
                     <a href="{{ route($ruta) }}" @class(['activo' => request()->routeIs(Str::before($ruta, '.').'*')])>
                         <i class="bi {{ $icono }}"></i><span>{{ $texto }}</span>
                     </a>
                 @endif
             @endforeach
 
-            @if ($usuario->esAdministrador())
+            @if ($menuAdmin !== [])
                 <div class="menu-titulo">Administración</div>
                 @foreach ($menuAdmin as [$ruta, $texto, $icono])
                     @if (Route::has($ruta))

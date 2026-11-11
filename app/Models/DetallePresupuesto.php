@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DetallePresupuesto extends Model
 {
@@ -33,5 +34,15 @@ class DetallePresupuesto extends Model
     public function tratamiento(): BelongsTo
     {
         return $this->belongsTo(Tratamiento::class, 'tratamiento_id');
+    }
+
+    public function sesiones(): HasMany
+    {
+        return $this->hasMany(Evolucion::class, 'detalle_presupuesto_id');
+    }
+
+    public function valorUnitario(): float
+    {
+        return $this->cantidad > 0 ? (float) $this->subtotal / $this->cantidad : 0.0;
     }
 }

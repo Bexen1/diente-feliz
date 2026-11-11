@@ -323,6 +323,11 @@ a { text-underline-offset: 2px; }
     border-radius: 8px; padding: .35rem .5rem; font-size: .82rem;
 }
 .semana-cita-libre { opacity: .55; }
+.matriz-permisos .matriz-grupo th {
+    background: var(--fondo); color: var(--texto-suave); font-size: .72rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .05em; padding-top: .9rem;
+}
+.matriz-permisos .form-check-input { width: 1.25rem; height: 1.25rem; cursor: pointer; }
 .grafico { width: 100%; height: auto; display: block; }
 .grafico-valor { font-size: 13px; font-weight: 700; fill: var(--texto); font-family: inherit; }
 .grafico-etiqueta { font-size: 13px; fill: var(--texto-suave); font-family: inherit; }

@@ -9,7 +9,7 @@ class Evolucion extends Model
 {
     protected $table = 'evoluciones';
 
-    protected $fillable = ['ficha_id', 'doctor_id', 'fecha', 'diagnostico', 'tratamiento_realizado'];
+    protected $fillable = ['ficha_id', 'doctor_id', 'detalle_presupuesto_id', 'fecha', 'diagnostico', 'tratamiento_realizado'];
 
     protected function casts(): array
     {
@@ -24,5 +24,10 @@ class Evolucion extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class, 'doctor_id');
+    }
+
+    public function detalle(): BelongsTo
+    {
+        return $this->belongsTo(DetallePresupuesto::class, 'detalle_presupuesto_id');
     }
 }
